@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_URL="${API_URL:-http://localhost:8000}"
-WEB_URL="${WEB_URL:-http://localhost:3000}"
-MAX_WAIT="${MAX_WAIT:-120}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck disable=SC1091
+source "${ROOT}/scripts/lib/load-verify-prompt.sh" quickstart
 
-echo "==> Verifying LexFlow quickstart (api + web)"
+echo "==> Verifying LexFlow quickstart (LEXFLOW_ENV=${LEXFLOW_ENV})"
 
 wait_for() {
   local url="$1"
   local name="$2"
   local elapsed=0
-  while (( elapsed < MAX_WAIT )); do
+  while (( elapsed < QUICKSTART_MAX_WAIT )); do
     if curl -sf "$url" >/dev/null 2>&1; then
       echo "OK  $name — $url"
       return 0
@@ -19,14 +19,14 @@ wait_for() {
     sleep 2
     elapsed=$((elapsed + 2))
   done
-  echo "FAIL $name — $url (timeout ${MAX_WAIT}s)"
+  echo "FAIL $name — $url (timeout ${QUICKSTART_MAX_WAIT}s)"
   return 1
 }
 
-wait_for "$API_URL/health" "API health"
-wait_for "$WEB_URL/" "Web home"
+wait_for "$QUICKSTART_API_HEALTH" "API health"
+wait_for "$QUICKSTART_WEB_HOME" "Web home"
 
-body="$(curl -sf "$API_URL/health")"
+body="$(curl -sf "$QUICKSTART_API_HEALTH")"
 if echo "$body" | grep -q '"status".*"ok"'; then
   echo "OK  API body contains status ok"
 else

@@ -29,6 +29,8 @@
 
 **All-in-one:** `make verify-platform`
 
+**Environment URLs:** [`config/environments/`](../../config/environments/) · per-check prompts: [`scripts/verify/prompts/`](../../scripts/verify/prompts/) · `LEXFLOW_ENV=local|staging|production`
+
 ---
 
 ## AI Assistant Rules

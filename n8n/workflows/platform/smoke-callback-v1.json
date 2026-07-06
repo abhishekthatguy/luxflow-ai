@@ -1,0 +1,35 @@
+{
+  "name": "Platform Smoke Callback",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/platform/smoke",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"source\": \"n8n\", \"correlationId\": \"{{ $execution.id }}\"}"
+      },
+      "id": "http",
+      "name": "Call FastAPI Smoke",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Call FastAPI Smoke", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "platform-smoke" }]
+}

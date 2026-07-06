@@ -18,6 +18,7 @@ cd luxflow-ai
 cp .env.example .env
 make setup && make dev
 make verify-quickstart
+make verify-platform   # or: ./verify-platform.sh
 ```
 
 Full playbook: [`docs/14-playbooks/10-minute-quickstart.md`](./docs/14-playbooks/10-minute-quickstart.md)

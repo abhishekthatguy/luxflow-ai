@@ -39,6 +39,7 @@ Frontend (Next.js) → FastAPI → RabbitMQ → Celery → n8n (private) → Ext
 | Review | `.ai/tasks/review-code.md` + `.ai/rules/code-review-checklist.md` |
 | Major feature | `.ai/tasks/create-rfc.md` + `docs/18-rfc/` |
 | Auth / domain logic | `.ai/tasks/verify-platform-readiness.md` + `docs/14-playbooks/platform-readiness-gate.md` |
+| URLs / verify scripts | `config/environments/` + `.cursor/prompts/verify-environment-urls.md` |
 
 Full index: `.ai/README.md` · Full docs: `docs/README.md` · RFCs: `docs/18-rfc/` · ADRs: `docs/13-decisions/`
 
