@@ -40,6 +40,7 @@ These apply to every task prompt — do not violate:
 5. **Immutable audit** — append-only audit logs for significant actions
 6. **Event-driven** — transactional outbox → RabbitMQ → Celery workers
 7. **No application code in `.ai/`** — prompts and docs only
+8. **RFC before code** — major features need Accepted RFC in `docs/18-rfc/`
 
 ---
 
@@ -57,6 +58,8 @@ These apply to every task prompt — do not violate:
 | Generate integration tests | [generate-integration-tests.md](./generate-integration-tests.md) | API integration + matter wall tests |
 | Generate Playwright tests | [generate-playwright-tests.md](./generate-playwright-tests.md) | E2E browser tests |
 | Generate documentation | [generate-documentation.md](./generate-documentation.md) | Docs for new feature or change |
+| **Create RFC** | [create-rfc.md](./create-rfc.md) | **Major feature — before any implementation** |
+| **Verify platform readiness** | [verify-platform-readiness.md](./verify-platform-readiness.md) | **Before auth, RBAC, domain, business logic** |
 
 ---
 
@@ -82,4 +85,5 @@ These apply to every task prompt — do not violate:
 - [Development Lifecycle](../handbook/development-lifecycle.md)
 - [Definition of Ready](../handbook/definition-of-ready.md)
 - [Definition of Done](../handbook/definition-of-done.md)
+- [RFC Process](../handbook/rfc-process.md)
 - [Documentation Index](../../docs/README.md)

@@ -52,8 +52,8 @@ flowchart TB
         DS1[Foundation Tokens]
     end
 
-    subgraph Decisions["13-decisions · 15-interview"]
-        DEC[ADRs & Interview Prep]
+    subgraph Decisions["13-decisions · 15-interview · 18-rfc"]
+        DEC[ADRs · RFCs · Interview Prep]
     end
 
     Product --> Domain --> Arch
@@ -78,6 +78,7 @@ flowchart TB
 | **Security Reviewer** | [08-security/threat-model.md](./08-security/threat-model.md) → [08-security/compliance-mapping.md](./08-security/compliance-mapping.md) → [04-api/authorization-rbac.md](./04-api/authorization-rbac.md) |
 | **AI / ML Engineer** | [07-ai/](./07-ai/README.md) → [02-domain/ai-aggregate.md](./02-domain/ai-aggregate.md) → [13-decisions/008-azure-openai-primary.md](./13-decisions/008-azure-openai-primary.md) |
 | **Product / Legal Ops** | [01-product/](./01-product/README.md) → [02-domain/ubiquitous-language.md](./02-domain/ubiquitous-language.md) |
+| **Tech Lead / Architect** | [18-rfc/README.md](./18-rfc/README.md) → [13-decisions/](./13-decisions/README.md) → [03-architecture/](./03-architecture/README.md) |
 | **Interview Prep** | [15-interview/system-design-overview.md](./15-interview/system-design-overview.md) |
 
 ---
@@ -266,9 +267,12 @@ flowchart TB
 | Playbook | Description |
 |----------|-------------|
 | [local-dev-setup.md](./14-playbooks/local-dev-setup.md) | Local development environment |
+| [10-minute-quickstart.md](./14-playbooks/10-minute-quickstart.md) | Sprint 0 — clone to dev in under 10 minutes |
+| [platform-readiness-gate.md](./14-playbooks/platform-readiness-gate.md) | Before auth — 10 infra checks (Sprint 1 exit) |
 | [onboarding.md](./14-playbooks/onboarding.md) | New engineer first week |
 | [incident-triage.md](./14-playbooks/incident-triage.md) | P1–P4 incident response |
 | [deploy-production.md](./14-playbooks/deploy-production.md) | Production deployment |
+| [platform-readiness-gate.md](./14-playbooks/platform-readiness-gate.md) | **Before auth/business logic** — 10 infra checks |
 | [rotate-secrets.md](./14-playbooks/rotate-secrets.md) | Secret rotation ceremony |
 | [add-workflow.md](./14-playbooks/add-workflow.md) | Add new n8n workflow |
 | [add-llm-provider.md](./14-playbooks/add-llm-provider.md) | Add new LLM provider |
@@ -287,13 +291,28 @@ flowchart TB
 
 | Document | Description |
 |----------|-------------|
-| [Sprint 0](./17-sprint-planning/sprint-00-documentation.md) | Documentation review & alignment |
-| [Sprint 1](./17-sprint-planning/sprint-01-infrastructure.md) | Monorepo, Docker, CI/CD |
+| [Sprint 0](./17-sprint-planning/sprint-00-documentation.md) | **Engineering setup** — clone to dev in < 10 min |
+| [Sprint 1](./17-sprint-planning/sprint-01-infrastructure.md) | Full platform stack + readiness gate |
 | [Sprint 2](./17-sprint-planning/sprint-02-auth-domain.md) | Auth, RBAC, domain models |
 | [Sprint 3](./17-sprint-planning/sprint-03-case-management.md) | Case Management module |
 | [Sprint 4](./17-sprint-planning/sprint-04-ai-n8n.md) | AI services & n8n |
 | [Sprint 5](./17-sprint-planning/sprint-05-production.md) | Production hardening & AWS |
 | [jira-import/](./17-sprint-planning/jira-import/README.md) | CSV files for Jira import (69 stories) |
+
+### [18-rfc/](./18-rfc/README.md) — Request for Comments (Design Before Code)
+
+**Every major feature is an Accepted RFC before implementation.** Differentiates LexFlow from ticket-to-PR delivery.
+
+| Document | Description |
+|----------|-------------|
+| [README.md](./18-rfc/README.md) | RFC process, RFC vs ADR, sprint gate, index |
+| [_template.md](./18-rfc/_template.md) | Copy to create new RFCs |
+| [000-rfc-process.md](./18-rfc/000-rfc-process.md) | Meta-RFC — design-before-code culture (Accepted) |
+| [RFC-001](./18-rfc/RFC-001-case-management.md) | Case Management — Planned (Sprint 3) |
+| [RFC-002](./18-rfc/RFC-002-authentication-rbac.md) | Auth & RBAC — Planned (Sprint 2) |
+| [RFC-003](./18-rfc/RFC-003-async-ai-summaries.md) | Async AI summaries — Planned (Sprint 4) |
+| [RFC-004](./18-rfc/RFC-004-document-pipeline.md) | Document pipeline — Planned (Sprint 4) |
+| [RFC-005](./18-rfc/RFC-005-n8n-orchestration-bootstrap.md) | n8n bootstrap — Planned (Sprint 4) |
 
 ---
 
@@ -325,6 +344,7 @@ These principles are enforced across all documentation:
 4. **Async AI** — All LLM calls via queue/worker; human-in-the-loop for legal outputs
 5. **Immutable audit** — Append-only audit logs for all significant actions
 6. **Event-driven** — Transactional outbox → RabbitMQ → Celery workers
+7. **RFC before code** — Major features require an Accepted RFC in `docs/18-rfc/` before implementation (see [RFC-000](./18-rfc/000-rfc-process.md))
 
 ---
 
@@ -344,3 +364,4 @@ Flat markdown files at the `docs/` root (e.g., `high-level-architecture.md`, `do
 | **Outbox Pattern** | Transactional event publishing ensuring at-least-once delivery |
 | **BFF** | Backend-for-Frontend — thin Next.js API routes, not business logic |
 | **HITL** | Human-in-the-Loop — attorney approval required for AI legal outputs |
+| **RFC** | Request for Comments — feature design document required before major implementation |

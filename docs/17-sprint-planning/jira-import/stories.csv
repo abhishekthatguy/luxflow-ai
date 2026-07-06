@@ -1,41 +1,40 @@
 Issue Key,Issue Type,Summary,Description,Epic Link,Story Points,Priority,Labels,Components,Sprint,Acceptance Criteria
-LEX-001,Story,Documentation inventory & gap analysis,Sprint 0: Verify docs/01-16 and .ai/ gap analysis. Output: gap-analysis.md.,Documentation & Alignment,5,High,sprint-0|docs,docs,Sprint 0,"- All doc folders indexed
-- Gap report published
-- Conflicts flagged
-- .ai/ cross-checked"
-LEX-002,Story,Architecture review & sign-off,"Review C4, ADRs 001-008, platform invariants. Tech Lead sign-off.",Documentation & Alignment,8,High,sprint-0|architecture,docs,Sprint 0,"- C4 L1-L3 reviewed
-- 8 ADRs discussed
-- Invariants walkthrough
-- Review notes published"
-LEX-003,Story,Security & compliance doc review,"STRIDE, matter walls, RBAC matrix, ABA/GDPR mapping.",Documentation & Alignment,5,High,sprint-0|security,docs,Sprint 0,"- Threat model reviewed
-- ADR-007 understood
-- Compliance checklist for Sprint 2"
-LEX-004,Story,Design system review & UX alignment,Review docs/16-design-system. Approve MVP screens.,Documentation & Alignment,5,Medium,sprint-0|design,docs,Sprint 0,"- Design system reviewed
-- Case dashboard spec approved
-- Token mapping documented"
-LEX-005,Story,Database schema review,Review docs/05-database against domain model.,Documentation & Alignment,3,Medium,sprint-0|database,docs,Sprint 0,"- 7 schemas reviewed
-- Case/Client mapped to aggregates"
-LEX-006,Story,Sprint 1-5 backlog import & refinement,Import epics and stories to Jira. PO prioritizes Sprint 1.,Documentation & Alignment,5,High,sprint-0|planning,docs,Sprint 0,"- Epics LEX-E0 to E5 in Jira
-- Sprint 1 stories ready"
-LEX-007,Story,Dev environment prerequisites,"AWS, GitHub, secrets namespace, team access.",Documentation & Alignment,3,Highest,sprint-0|infra,infra,Sprint 0,"- AWS dev/staging access
-- GitHub branch protection
-- Team checklist 100%"
-LEX-101,Story,Monorepo scaffold,"Folder structure, Makefile, .env.example per architecture docs.",Platform Infrastructure,8,Highest,sprint-1|infra,infra,Sprint 1,"- Structure matches docs
-- make setup/dev/test/lint works"
-LEX-102,Story,FastAPI application shell,"Empty FastAPI with health, middleware stubs, Dockerfile.",Platform Infrastructure,5,Highest,sprint-1|backend,backend,Sprint 1,"- GET /health 200
-- OpenAPI dev only
-- Multi-stage Dockerfile"
-LEX-103,Story,Next.js application shell,"App Router, Tailwind, ShadCN, app shell layout.",Platform Infrastructure,5,Highest,sprint-1|frontend,frontend,Sprint 1,"- Route groups auth/dashboard
-- Design tokens applied"
-LEX-104,Story,Docker Compose local stack,"postgres pgvector, redis, rabbitmq, n8n internal, minio, worker.",Platform Infrastructure,8,Highest,sprint-1|infra,infra,Sprint 1,"- make dev starts all services
-- n8n not public port"
-LEX-105,Story,Alembic migration baseline,Create 7 schemas baseline migration.,Platform Infrastructure,3,High,sprint-1|database,backend,Sprint 1,- Alembic upgrade/downgrade works
-LEX-106,Story,Celery worker shell,"Celery + RabbitMQ, ping task, worker container.",Platform Infrastructure,5,High,sprint-1|backend,backend,Sprint 1,- ping task returns pong
-LEX-107,Story,GitHub Actions CI pipeline,"Lint, test, build, Trivy on PR.",Platform Infrastructure,8,Highest,sprint-1|ci,infra,Sprint 1,"- CI < 10 min
-- Branch protection enabled"
-LEX-108,Story,Pre-commit hooks & code quality,"ruff, mypy, eslint, prettier pre-commit.",Platform Infrastructure,3,Medium,sprint-1|infra,infra,Sprint 1,- pre-commit runs locally
-LEX-109,Story,Shared packages scaffold,packages/shared and packages/ui workspaces.,Platform Infrastructure,3,Medium,sprint-1|frontend,frontend,Sprint 1,- Workspace linking works
-LEX-110,Story,Staging ECS deploy empty apps,"Terraform stub, ECR, ECS Fargate staging.",Platform Infrastructure,7,High,sprint-1|aws,infra,Sprint 1,- Staging health checks pass
+LEX-001,Story,Monorepo scaffold,"Folder structure, Makefile, .env.example. No business code.",Engineering Setup,5,Highest,sprint-0|infra,infra,Sprint 0,"- Structure matches folder-structure.md
+- make setup/dev/down/ps/lint/test targets
+- .env.example complete"
+LEX-002,Story,FastAPI application shell,"GET /health only. Correlation ID + JSON log stub. No auth or domain routes.",Engineering Setup,5,Highest,sprint-0|backend,backend,Sprint 0,"- GET /health 200
+- No business routes
+- Dockerfile multi-stage"
+LEX-003,Story,Next.js application shell,"Status page fetching API health. Tailwind + ShadCN init. No auth logic.",Engineering Setup,5,Highest,sprint-0|frontend,frontend,Sprint 0,"- / shows API health green
+- No dashboard/auth logic
+- ESLint + tsc configured"
+LEX-004,Story,Docker Compose core stack,"api, web, postgres pgvector, redis only. make dev under 10 min.",Engineering Setup,8,Highest,sprint-0|infra,infra,Sprint 0,"- make dev starts 4 services
+- Healthchecks on all
+- Documented in 10-minute-quickstart.md"
+LEX-005,Story,Setup script & 10-minute quickstart doc,"scripts/setup.sh, quickstart playbook, README quick start section.",Engineering Setup,5,Highest,sprint-0|docs|infra,infra,Sprint 0,"- make verify-quickstart exits 0
+- Timings documented
+- Troubleshooting section"
+LEX-006,Story,Shared packages scaffold,packages/shared and packages/ui workspaces.,Engineering Setup,3,Medium,sprint-0|frontend,frontend,Sprint 0,"- ApiHealthResponse type exported
+- Web imports from both packages"
+LEX-007,Story,Pre-commit & editor config,"pre-commit ruff/eslint/gitleaks, .editorconfig.",Engineering Setup,2,Medium,sprint-0|infra,infra,Sprint 0,"- make setup installs hooks
+- Hooks complete < 15 sec"
+LEX-008,Story,Minimal GitHub Actions CI,"Lint + quickstart smoke on PR. Branch protection.",Engineering Setup,5,Highest,sprint-0|ci,infra,Sprint 0,"- CI < 8 min
+- quickstart.sh in CI
+- README badge"
+LEX-009,Story,GitHub & access provisioning,"Repo access, branch protection, no secrets in repo.",Engineering Setup,3,Highest,sprint-0|infra,infra,Sprint 0,"- Team write access
+- gitleaks clean"
+LEX-010,Story,10-minute verification & sign-off,"3 engineers timed quickstart. quickstart-timings.md.",Engineering Setup,3,Highest,sprint-0|infra,infra,Sprint 0,"- All under 10 min
+- Tech lead sign-off"
+LEX-104,Story,Docker Compose full stack,"Add rabbitmq, worker, n8n internal, minio, otel, grafana.",Platform Infrastructure,8,Highest,sprint-1|infra,infra,Sprint 1,"- make dev-full all services
+- n8n not public"
+LEX-105,Story,Alembic migration baseline,Empty 7-schema baseline. No business tables.,Platform Infrastructure,3,High,sprint-1|database,backend,Sprint 1,- upgrade/downgrade works
+LEX-106,Story,Celery worker shell,"Celery + RabbitMQ, ping task, worker container.",Platform Infrastructure,5,High,sprint-1|backend,backend,Sprint 1,- ping returns pong
+LEX-107,Story,CI pipeline expansion,"Integration smoke, Docker build, Trivy. verify-platform in CI.",Platform Infrastructure,5,Highest,sprint-1|ci,infra,Sprint 1,"- CI < 12 min
+- Trivy blocks CRITICAL"
+LEX-110,Story,Staging ECS deploy empty apps,"Terraform stub, ECR, ECS Fargate staging.",Platform Infrastructure,7,High,sprint-1|aws,infra,Sprint 1,- Staging /health 200
+LEX-111,Story,Observability local stack,"OTel collector, Grafana + Tempo on :3001.",Platform Infrastructure,5,High,sprint-1|observability,infra,Sprint 1,- make verify-traces passes
+LEX-112,Story,Platform integration smoke tests,"make verify-platform all 10 checks. No business logic tests.",Platform Infrastructure,8,Highest,sprint-1|infra,backend,Sprint 1,- verify-platform exits 0
+LEX-113,Story,App shell hardening,"OpenAPI dev, empty auth/dashboard route groups, internal webhook stub 501.",Platform Infrastructure,3,Medium,sprint-1|backend|frontend,backend,Sprint 1,- Still no business code
 LEX-201,Story,Identity schema migration,"firms, users, roles, permissions, refresh_tokens + seed.",Identity Auth & Domain Foundation,5,Highest,sprint-2|database,backend,Sprint 2,"- Migration matches identity-schema.md
 - 10 roles seeded"
 LEX-202,Story,JWT authentication API,"login, refresh, logout. ADR-005.",Identity Auth & Domain Foundation,8,Highest,sprint-2|security,backend,Sprint 2,"- RS256 JWT

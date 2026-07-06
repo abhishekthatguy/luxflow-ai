@@ -15,6 +15,8 @@ The engineering handbook defines how LexFlow AI is built, reviewed, shipped, and
 | [definition-of-ready.md](./definition-of-ready.md) | When a ticket is ready for engineering work |
 | [definition-of-done.md](./definition-of-done.md) | When work is complete and shippable |
 | [adr-process.md](./adr-process.md) | Architecture Decision Record workflow |
+| [rfc-process.md](./rfc-process.md) | Request for Comments — feature design before code |
+| [Platform Readiness Gate](../../docs/14-playbooks/platform-readiness-gate.md) | 10 infra checks before auth/business logic (playbook) |
 
 ---
 
@@ -36,9 +38,11 @@ flowchart TB
         SEC[08-security/]
         TEST[10-testing/]
         ADR[13-decisions/]
+        RFC[18-rfc/]
     end
 
     HB --> Docs
+    HB --> RFC
     TASKS --> HB
     TASKS --> RULES
     TASKS --> MEM
@@ -48,6 +52,7 @@ flowchart TB
 | Layer | Authority | Updates When |
 |-------|-----------|--------------|
 | `docs/13-decisions/` | Binding architectural decisions | Significant cross-team decisions |
+| `docs/18-rfc/` | Feature design before implementation | Major features and epics |
 | `docs/` | Technical design and contracts | Feature or architecture changes |
 | `.ai/handbook/` | Engineering process and gates | Process changes |
 | `.ai/rules/` | AI assistant behavior | Team conventions change |
@@ -64,6 +69,7 @@ flowchart TB
 5. **Immutable audit** — Append-only audit logs for all significant actions
 6. **Event-driven** — Transactional outbox → RabbitMQ → Celery workers
 7. **404 deny** — Unauthorized case GET returns 404, not 403 (ADR-007)
+8. **RFC before code** — Major features require Accepted RFC in `docs/18-rfc/` before implementation
 
 ---
 

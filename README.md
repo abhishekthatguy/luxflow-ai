@@ -4,7 +4,23 @@
 
 LexFlow AI eliminates repetitive manual work for lawyers, paralegals, legal assistants, and operations teams — without replacing legal judgment.
 
-**Status:** Pre-implementation — documentation phase complete.
+**Status:** Sprint 0 — engineering setup (docs complete; application scaffold in progress).
+
+---
+
+## Quick Start (10 minutes)
+
+**Sprint 0 goal:** clone → developing with no business code.
+
+```bash
+git clone git@github.com:abhishekthatguy/luxflow-ai.git
+cd luxflow-ai
+cp .env.example .env
+make setup && make dev
+make verify-quickstart
+```
+
+Full playbook: [`docs/14-playbooks/10-minute-quickstart.md`](./docs/14-playbooks/10-minute-quickstart.md)
 
 ---
 
@@ -57,6 +73,7 @@ cd luxflow-ai
 | [15-interview](./docs/15-interview/) | System design interview preparation |
 | [16-design-system](./docs/16-design-system/) | Complete UI/UX design system |
 | [17-sprint-planning](./docs/17-sprint-planning/) | Sprint plans & Jira import (Sprints 0–5) |
+| [18-rfc](./docs/18-rfc/) | **RFC process** — design every major feature before code |
 
 ---
 
@@ -74,6 +91,8 @@ Frontend (Next.js) → FastAPI → Queue (RabbitMQ) → Workers (Celery) → n8n
 - All **AI processing** is asynchronous with attorney approval for legal outputs
 - **Matter walls** enforce case-level access control
 - **Immutable audit logs** for all significant actions
+- **RFC before code** — major features require an Accepted RFC ([`docs/18-rfc/`](./docs/18-rfc/))
+- **Platform readiness** — verify all 10 infra checks before auth or business logic ([`platform-readiness-gate`](./docs/14-playbooks/platform-readiness-gate.md))
 
 ---
 

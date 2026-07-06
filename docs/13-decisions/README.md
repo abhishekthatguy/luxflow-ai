@@ -13,6 +13,8 @@ This folder is the **canonical record of significant architectural decisions** f
 
 ADRs are **immutable once accepted**. Supersession creates a new ADR that references the prior record.
 
+**Related:** Feature design uses **RFCs** (Request for Comments) in [`../18-rfc/`](../18-rfc/README.md) — RFCs describe *what to build*; ADRs record *binding architectural choices*. Write RFCs **before** implementation; write ADRs when a decision is hard to reverse or affects multiple teams.
+
 ---
 
 ## Scope
@@ -195,3 +197,4 @@ ADRs were migrated from `docs/adr/` to `docs/13-decisions/` with expanded enterp
 | [../03-architecture/event-driven-design.md](../03-architecture/event-driven-design.md) | Outbox pattern detail (ADR-006) |
 | [../03-architecture/data-flow.md](../03-architecture/data-flow.md) | Sync vs async paths (ADR-004) |
 | [../development-standards.md](../development-standards.md) | Code review and PR process |
+| [../18-rfc/README.md](../18-rfc/README.md) | RFC process — feature design before code |

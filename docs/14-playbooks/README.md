@@ -43,6 +43,8 @@ Use playbooks during onboarding, local setup, deployments, incidents, secret rot
 | Playbook | When to Use | Primary Owner |
 |----------|-------------|---------------|
 | [local-dev-setup.md](./local-dev-setup.md) | First machine setup; stack won't start; dependency issues | All Engineers |
+| [10-minute-quickstart.md](./10-minute-quickstart.md) | **Sprint 0** — clone to dev in under 10 minutes | All Engineers |
+| [platform-readiness-gate.md](./platform-readiness-gate.md) | **Before Sprint 2 / auth** — verify all 10 infra checks | Tech Lead |
 | [onboarding.md](./onboarding.md) | New engineer first week; doc reading order | Engineering Manager |
 | [incident-triage.md](./incident-triage.md) | PagerDuty alert; outage; security suspicion | On-Call SRE |
 | [deploy-production.md](./deploy-production.md) | Production release; hotfix deploy | Release Manager / SRE |
@@ -58,7 +60,9 @@ Use playbooks during onboarding, local setup, deployments, incidents, secret rot
 flowchart TD
     START([What do you need?]) --> Q1{Environment?}
 
+    Q1 -->|First clone| QUICK[10-minute-quickstart.md]
     Q1 -->|Local machine| LOCAL[local-dev-setup.md]
+    Q1 -->|Before auth/features| GATE[platform-readiness-gate.md]
     Q1 -->|New to team| ONBOARD[onboarding.md]
     Q1 -->|Production change| Q2{Change type?}
 

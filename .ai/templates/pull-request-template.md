@@ -78,6 +78,7 @@ Closes #
 
 - [ ] No docs change needed
 - [ ] Docs updated in same PR
+- [ ] RFC linked (major feature): [RFC-___](../../docs/18-rfc/)
 - [ ] ADR created (if significant architectural decision): ADR-___
 
 ## Deployment Notes

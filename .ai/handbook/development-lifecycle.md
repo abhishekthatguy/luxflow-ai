@@ -15,7 +15,10 @@ Define the end-to-end engineering lifecycle for LexFlow AI — from backlog inta
 
 ```mermaid
 flowchart LR
-    IDEA[Idea / Request] --> REFINE[Refine & Prioritize]
+    IDEA[Idea / Request] --> RFC{RFC required?}
+    RFC -->|Yes| RFCD[RFC Draft & Accept]
+    RFC -->|No| REFINE[Refine & Prioritize]
+    RFCD --> REFINE
     REFINE --> DOR{Definition<br/>of Ready?}
     DOR -->|No| REFINE
     DOR -->|Yes| DEV[Develop]
@@ -44,9 +47,10 @@ flowchart LR
 
 ---
 
-## Phase 2 — Design (if needed)
+## Phase 2 — Design (RFC + ADR)
 
 Required for:
+- **All major features** — Accepted RFC in `docs/18-rfc/` ([rfc-process.md](./rfc-process.md))
 - New bounded context or aggregate
 - New API resource group
 - Schema changes
@@ -55,6 +59,7 @@ Required for:
 
 | Activity | Owner | Output |
 |----------|-------|--------|
+| **RFC (major features)** | Feature owner | Accepted RFC in `docs/18-rfc/` per [rfc-process.md](./rfc-process.md) |
 | Domain design | Backend engineer | Entity/event updates in `docs/02-domain/` |
 | API contract | Backend engineer | Endpoint spec in `docs/04-api/` |
 | UI wireframe | Frontend engineer | Component structure in `docs/12-ui/` |
@@ -62,7 +67,7 @@ Required for:
 | ADR (if significant) | Architect | Draft in `docs/13-decisions/` per [adr-process.md](./adr-process.md) |
 | Security review | Security reviewer | Threat notes for privileged data paths |
 
-**Gate:** Design reviewed by tech lead; ADR accepted if required.
+**Gate:** RFC **Accepted** (if required); **Platform Readiness** passed (before auth/domain); design reviewed by tech lead; ADR accepted if required.
 
 ---
 
@@ -148,7 +153,7 @@ See: `docs/14-playbooks/deploy-production.md`
 |----------|-----------|--------------|---------|
 | Standup | Daily | Engineering team | Blockers, progress |
 | Refinement | Weekly | Eng + Product | Groom backlog, check DoR |
-| Architecture review | Bi-weekly | Tech leads + architects | ADRs, cross-cutting design |
+| Architecture review | Bi-weekly | Tech leads + architects | RFCs, ADRs, cross-cutting design |
 | Security review | Monthly | Security + Eng | Threat model updates |
 | Retro | Bi-weekly | Engineering team | Process improvement |
 
@@ -157,7 +162,7 @@ See: `docs/14-playbooks/deploy-production.md`
 ## Issue Type Workflows
 
 ### Feature
-Intake → DoR → Design (if needed) → Dev → Review → Staging → E2E → Production
+Intake → RFC (if major) → Accept RFC → DoR → Dev → Review → Staging → E2E → Production
 
 ### Bug
 Intake → Triage (severity) → DoR (lightweight) → Fix → Review → Staging → Production (hotfix if P1)
@@ -185,6 +190,7 @@ See: `docs/14-playbooks/incident-triage.md`
 - [Definition of Ready](./definition-of-ready.md)
 - [Definition of Done](./definition-of-done.md)
 - [ADR Process](./adr-process.md)
+- [RFC Process](./rfc-process.md)
 - [Engineering Handbook](./engineering-handbook.md)
 - [Development Standards](../../docs/development-standards.md)
 - [CI/CD Pipeline](../../docs/09-deployment/cicd-pipeline.md)

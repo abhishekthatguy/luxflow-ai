@@ -55,6 +55,22 @@ main (protected)
 
 ---
 
+## 3.1 RFC Gate — Design Before Code
+
+**Every major feature requires an Accepted RFC** before implementation begins. See [`docs/18-rfc/README.md`](./18-rfc/README.md).
+
+| Stage | Requirement |
+|-------|-------------|
+| Sprint planning | Epic has **Accepted** RFC (or documented exemption) |
+| Branch `feat/` | PR links `RFC-NNN` in description |
+| Code review | Behavior matches accepted RFC; deviations noted in RFC |
+
+RFC covers *what to build*; ADR covers *irreversible architecture*. Both may be required for the same epic.
+
+**Platform Readiness** (Sprint 1 exit) must pass before auth or business logic — see [`docs/14-playbooks/platform-readiness-gate.md`](./14-playbooks/platform-readiness-gate.md).
+
+---
+
 ## 4. Pull Request Process
 
 ### 4.1 PR Checklist
@@ -69,6 +85,7 @@ Every PR must satisfy:
 - [ ] API changes reflected in OpenAPI spec
 - [ ] Documentation updated (if architectural change)
 - [ ] ADR created (if significant architectural decision)
+- [ ] RFC linked (if implementing a major feature — `docs/18-rfc/`)
 
 ### 4.2 PR Size Guidelines
 

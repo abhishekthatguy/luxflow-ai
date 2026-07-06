@@ -61,6 +61,8 @@ Frontend (Next.js) → FastAPI → RabbitMQ → Celery Workers → n8n (private)
 | E2E tests | `.ai/tasks/generate-playwright-tests.md` |
 | Documentation | `.ai/tasks/generate-documentation.md` |
 | Architecture change | `.ai/handbook/adr-process.md` + `docs/13-decisions/` |
+| **Major feature** | `.ai/tasks/create-rfc.md` + `docs/18-rfc/` — **RFC before code** |
+| **Auth / domain / business logic** | `.ai/tasks/verify-platform-readiness.md` — **platform gate first** |
 
 ---
 
@@ -107,6 +109,7 @@ Full index: [`.ai/rules/README.md`](.ai/rules/README.md)
 | [Definition of Ready](.ai/handbook/definition-of-ready.md) | Ticket readiness |
 | [Definition of Done](.ai/handbook/definition-of-done.md) | PR merge criteria |
 | [ADR Process](.ai/handbook/adr-process.md) | Architecture decisions |
+| [RFC Process](.ai/handbook/rfc-process.md) | Feature design before code |
 
 ---
 
@@ -131,6 +134,8 @@ Use terms from [`.ai/memory/GLOSSARY.md`](.ai/memory/GLOSSARY.md):
 - Commit secrets, `.env` files, or credentials
 - Skip matter wall authorization tests
 - Contradict ADRs without proposing a new one
+- Implement major features without an Accepted RFC (`docs/18-rfc/`)
+- Write auth, RBAC, domain logic, or business rules before Platform Readiness Gate passes (`docs/14-playbooks/platform-readiness-gate.md`)
 
 ---
 

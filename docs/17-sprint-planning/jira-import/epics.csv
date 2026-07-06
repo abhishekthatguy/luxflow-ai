@@ -1,7 +1,7 @@
 Summary,Issue Type,Description,Priority,Labels,Components
-Documentation & Alignment,Epic,"Sprint 0: Review and sign off all pre-implementation documentation. Gap analysis, architecture review, security review, design system alignment, Jira backlog import.",High,sprint-0|epic,docs
-Platform Infrastructure,Epic,"Sprint 1: Monorepo scaffold, Docker Compose, FastAPI/Next.js shells, Celery, CI/CD, staging ECS deploy.",High,sprint-1|epic,infra
+Engineering Setup,Epic,"Sprint 0: Clone to dev in under 10 minutes. Monorepo scaffold, empty api/web shells, Docker Compose core (postgres/redis), Makefile, minimal CI. No business code.",Highest,sprint-0|epic,infra
+Platform Infrastructure,Epic,"Sprint 1: Full Docker stack (RabbitMQ, Celery, n8n, MinIO, OTel, Grafana), Alembic baseline, verify-platform gate, staging ECS. No business code.",High,sprint-1|epic,infra
 Identity Auth & Domain Foundation,Epic,"Sprint 2: JWT auth, RBAC, matter walls, domain entities, identity/cases schema, audit log, outbox, login UI.",Highest,sprint-2|epic|security,backend
 Case Management Module,Epic,"Sprint 3: Case and client CRUD, participants, tasks, deadlines, notes, timeline API and UI.",Highest,sprint-3|epic,backend
 AI Services & Workflow Orchestration,Epic,"Sprint 4: Document upload/OCR, async AI summary, approval flow, n8n private deploy, first workflow.",Highest,sprint-4|epic|ai|n8n,backend
-Production Readiness & AWS Deployment,Epic,"Sprint 5: Observability, security hardening, load tests, production AWS, go-live.",Highest,sprint-5|epic|aws,infra
+Production Readiness & AWS Deployment,Epic,"Sprint 5: Observability hardening, security, load tests, production AWS, go-live.",Highest,sprint-5|epic|aws,infra

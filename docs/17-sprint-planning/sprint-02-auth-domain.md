@@ -5,7 +5,9 @@
 **Target Velocity:** 62 story points  
 **Sprint Goal:** Users can log in with JWT, RBAC and matter walls are enforced, core domain entities exist in PostgreSQL, and seed data supports development.
 
-**Depends on:** Sprint 1 — Docker stack, API shell, migrations baseline
+**Depends on:** Sprint 1 — **Platform Readiness Gate passed** ([`platform-readiness-gate.md`](../14-playbooks/platform-readiness-gate.md)) + RFC-002 Accepted
+
+> **Hard gate:** Do not implement JWT, RBAC, matter walls, identity schema, or domain entities until all 10 platform readiness checks pass and RFC-002 is Accepted.
 
 ---
 

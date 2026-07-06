@@ -22,8 +22,8 @@ gantt
     axisFormat %b %d
 
     section Sprints
-    Sprint 0 Documentation     :s0, 2026-07-07, 14d
-    Sprint 1 Infrastructure    :s1, after s0, 14d
+    Sprint 0 Engineering Setup   :s0, 2026-07-07, 7d
+    Sprint 1 Full Platform       :s1, after s0, 14d
     Sprint 2 Auth & Domain     :s2, after s1, 14d
     Sprint 3 Case Management   :s3, after s2, 14d
     Sprint 4 AI & n8n            :s4, after s3, 14d
@@ -32,14 +32,53 @@ gantt
 
 | Sprint | Theme | Story Points (Target) | Primary Outcome |
 |--------|-------|----------------------|-----------------|
-| [Sprint 0](./sprint-00-documentation.md) | Documentation review & sign-off | 34 | Docs validated; backlog refined; team aligned |
-| [Sprint 1](./sprint-01-infrastructure.md) | Monorepo, Docker, CI/CD, tooling | 55 | `make dev` works; CI green; empty apps deploy to staging |
+| [Sprint 0](./sprint-00-documentation.md) | **Engineering setup** — clone to dev in < 10 min | 34 | `make setup && make dev`; no business code |
+| [Sprint 1](./sprint-01-infrastructure.md) | Full platform stack + readiness gate | 42 | `make verify-platform` passes; still no business code |
 | [Sprint 2](./sprint-02-auth-domain.md) | Auth, RBAC, core domain models | 62 | Login works; matter walls enforced; migrations baseline |
 | [Sprint 3](./sprint-03-case-management.md) | Case Management module | 68 | Full case CRUD UI + API; timeline; participants |
 | [Sprint 4](./sprint-04-ai-n8n.md) | AI services + n8n orchestration | 72 | Async AI summary; document pipeline; first workflow |
 | [Sprint 5](./sprint-05-production.md) | Hardening, observability, AWS | 58 | Staging load test; observability; production deploy |
 
 **Total estimated:** ~349 story points (~12 weeks at velocity 29–35 SP/sprint for a team of 6–8)
+
+---
+
+## RFC Gate (Sprint 1+)
+
+From Sprint 1 onward, **no epic enters a sprint without an Accepted RFC** in [`docs/18-rfc/`](../18-rfc/README.md).
+
+| Sprint | Required RFC(s) | Status |
+|--------|-----------------|--------|
+| Sprint 2 | [RFC-002](../18-rfc/RFC-002-authentication-rbac.md) | Planned — draft before kickoff |
+| Sprint 3 | [RFC-001](../18-rfc/RFC-001-case-management.md) | Planned |
+| Sprint 4 | [RFC-003](../18-rfc/RFC-003-async-ai-summaries.md), [RFC-004](../18-rfc/RFC-004-document-pipeline.md), [RFC-005](../18-rfc/RFC-005-n8n-orchestration-bootstrap.md) | Planned |
+
+Sprint 1 (infrastructure) is exempt — no user-facing feature RFC required. Process meta-RFC [RFC-000](../18-rfc/000-rfc-process.md) is **Accepted**.
+
+---
+
+## Platform Readiness Gate (before Sprint 2)
+
+**No authentication or business logic until all 10 checks pass.** See [`platform-readiness-gate.md`](../14-playbooks/platform-readiness-gate.md).
+
+| # | Check |
+|---|-------|
+| 1 | Docker Compose boots all services |
+| 2 | Health endpoints for every service |
+| 3 | Structured logging with request/correlation IDs |
+| 4 | OpenTelemetry traces visible in Grafana |
+| 5 | Redis cache abstraction tested |
+| 6 | RabbitMQ publish/consume sample works |
+| 7 | Celery worker processes a sample job |
+| 8 | n8n can call FastAPI through internal network |
+| 9 | MinIO upload/download works |
+| 10 | GitHub Actions pass lint, type checks, and tests |
+
+```bash
+make verify-platform   # must exit 0 before Sprint 2 kickoff
+```
+
+Sprint 2 requires **Platform Ready** + **RFC-002 Accepted**.
 
 ---
 

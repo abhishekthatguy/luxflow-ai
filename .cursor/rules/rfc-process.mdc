@@ -1,0 +1,42 @@
+---
+description: RFC process — design major features before implementation
+globs:
+  - docs/18-rfc/**
+  - services/**
+  - apps/**
+---
+
+# RFC — Design Before Code
+
+Major features require an **Accepted RFC** in `docs/18-rfc/` before production code.
+
+## When RFC Is Required
+
+- New API resource group, bounded context module, AI feature, n8n workflow family
+- Cross-cutting API + UI + worker deliverable
+- Case-scoped feature with matter wall impact
+
+## When to Stop and Draft RFC
+
+If user asks to implement a major feature and no Accepted RFC exists:
+
+1. Read `docs/18-rfc/README.md` index
+2. Use `.ai/tasks/create-rfc.md` + `docs/18-rfc/_template.md`
+3. Do **not** write `services/` or `apps/` code until RFC is Accepted (unless user explicitly overrides)
+
+## RFC vs ADR
+
+| RFC | ADR |
+|-----|-----|
+| What to build | Binding architecture choice |
+| `docs/18-rfc/` | `docs/13-decisions/` |
+
+## PR Requirement
+
+Link `RFC-NNN` in PR body; verify behavior matches accepted design.
+
+## Platform Readiness (before auth / business logic)
+
+Do not implement JWT, RBAC, domain logic, or matter walls until [`platform-readiness-gate.md`](../../docs/14-playbooks/platform-readiness-gate.md) passes (`make verify-platform`).
+
+Full process: `.ai/handbook/rfc-process.md`

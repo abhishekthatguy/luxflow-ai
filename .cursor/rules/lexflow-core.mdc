@@ -25,6 +25,8 @@ Frontend (Next.js) → FastAPI → RabbitMQ → Celery → n8n (private) → Ext
 8. **Immutable audit logs** — append-only for all mutating operations
 9. **Case-scoped RAG** — vector search always filters by case_id
 10. **No secrets in code** — AWS Secrets Manager only
+11. **RFC before code** — major features require Accepted RFC in `docs/18-rfc/` before implementation
+12. **Platform readiness** — verify [`platform-readiness-gate.md`](docs/14-playbooks/platform-readiness-gate.md) before auth or business logic
 
 ## Context Loading
 
@@ -35,8 +37,10 @@ Frontend (Next.js) → FastAPI → RabbitMQ → Celery → n8n (private) → Ext
 | UI | `.ai/tasks/create-ui.md` + `.ai/rules/frontend-standards.md` |
 | Workflow | `.ai/tasks/create-workflow.md` + `.ai/rules/workflow-standards.md` |
 | Review | `.ai/tasks/review-code.md` + `.ai/rules/code-review-checklist.md` |
+| Major feature | `.ai/tasks/create-rfc.md` + `docs/18-rfc/` |
+| Auth / domain logic | `.ai/tasks/verify-platform-readiness.md` + `docs/14-playbooks/platform-readiness-gate.md` |
 
-Full index: `.ai/README.md` · Full docs: `docs/README.md` · ADRs: `docs/13-decisions/`
+Full index: `.ai/README.md` · Full docs: `docs/README.md` · RFCs: `docs/18-rfc/` · ADRs: `docs/13-decisions/`
 
 ## Domain Language
 

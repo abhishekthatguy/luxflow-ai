@@ -2,7 +2,7 @@
 
 **Load this first.** Compressed full-project context for AI assistants.  
 **Authoritative source:** `docs/README.md`, `docs/01-product/`, `docs/03-architecture/`  
-**Status:** Pre-implementation (documentation complete, no production code yet)
+**Status:** Pre-implementation — documentation complete; **Sprint 0** delivers engineering scaffold (no business code).
 
 ---
 
@@ -12,6 +12,7 @@
 |---|---|
 | **GitHub** | [github.com/abhishekthatguy/luxflow-ai](https://github.com/abhishekthatguy/luxflow-ai) |
 | **Clone (SSH)** | `git clone git@github.com:abhishekthatguy/luxflow-ai.git` |
+| **Git author** | `abhishek <abhishekthatguy@gmail.com>` — use for all commits (see `.ai/rules/git-workflow.md`) |
 
 All LexFlow AI code and docs live in this repo only — not in `corptec-work` or other workspaces.
 
@@ -128,6 +129,8 @@ See `memory/INVARIANTS.md` for enforcement detail.
 6. **Event-driven** — transactional outbox → RabbitMQ (ADR-006)
 7. **HITL** — AI legal outputs require attorney approval before team visibility
 8. Frontend **never** calls n8n, RabbitMQ, workers, or LLM providers directly
+9. **RFC before code** — major features require Accepted RFC in `docs/18-rfc/` before implementation
+10. **Platform readiness** — all 10 checks in `docs/14-playbooks/platform-readiness-gate.md` before auth or business logic
 
 ---
 

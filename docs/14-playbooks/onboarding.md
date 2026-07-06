@@ -9,9 +9,11 @@
 
 ## Purpose
 
-This playbook onboards a new LexFlow AI engineer through **Day 1 access**, **local environment setup**, **mandatory reading order**, **first contribution**, and **week-one checkpoints**. Goal: productive, security-aware contributor within five business days.
+This playbook onboards a new LexFlow AI engineer through **Day 1 access**, **10-minute quickstart**, **mandatory reading order**, **first contribution**, and **week-one checkpoints**. Goal: productive, security-aware contributor within five business days.
 
-Pair this playbook with [local-dev-setup.md](./local-dev-setup.md) for machine setup.
+**Day 1 first:** [10-minute-quickstart.md](./10-minute-quickstart.md) — clone to `make dev` before reading architecture docs.
+
+Pair with [local-dev-setup.md](./local-dev-setup.md) for the full stack (after Sprint 1).
 
 ---
 
@@ -104,9 +106,10 @@ Read documents **in sequence** unless your role path says otherwise. Do not skip
 | 3 | [02-domain/ubiquitous-language.md](../02-domain/ubiquitous-language.md) | 30 min | Shared vocabulary (Case, Matter Wall, etc.) |
 | 4 | [03-architecture/system-context.md](../03-architecture/system-context.md) | 30 min | C4 Level 1 — external systems |
 | 5 | [03-architecture/container-architecture.md](../03-architecture/container-architecture.md) | 45 min | C4 Level 2 — services and data stores |
-| 6 | [adr/README.md](../13-decisions/README.md) + ADRs 001–006 | 60 min | Non-negotiable architectural decisions |
-| 7 | [development-standards.md](../development-standards.md) | 30 min | Branching, PR process, code style |
-| 8 | [folder-structure.md](../folder-structure.md) | 20 min | Where code lives |
+| 6 | [13-decisions/README.md](../13-decisions/README.md) + ADRs 001–008 | 60 min | Non-negotiable architectural decisions |
+| 7 | [18-rfc/README.md](../18-rfc/README.md) + [000-rfc-process.md](../18-rfc/000-rfc-process.md) | 30 min | **Design before code** — RFC process |
+| 8 | [development-standards.md](../development-standards.md) | 30 min | Branching, PR process, code style |
+| 9 | [folder-structure.md](../folder-structure.md) | 20 min | Where code lives |
 
 ### Phase 2 — Role-Specific (Days 2–3)
 

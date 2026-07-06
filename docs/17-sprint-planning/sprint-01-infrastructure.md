@@ -1,11 +1,14 @@
-# Sprint 1 — Platform Infrastructure
+# Sprint 1 — Full Platform Stack
 
 **Epic:** LEX-E1 — Platform Infrastructure  
 **Duration:** 2 weeks  
-**Target Velocity:** 55 story points  
-**Sprint Goal:** Deliver a working monorepo with Docker Compose local stack, CI/CD pipeline, empty deployable apps, and developer tooling so the team can run `make dev` and merge with confidence.
+**Target Velocity:** 42 story points  
+**Sprint Goal:** Extend the Sprint 0 core stack to the **full platform** and pass the [Platform Readiness Gate](../14-playbooks/platform-readiness-gate.md) — still **no business code**.
 
-**Depends on:** Sprint 0 exit criteria met
+**Depends on:** [Sprint 0 exit criteria](./sprint-00-documentation.md) — 10-minute quickstart passing
+
+> Sprint 0 delivers clone → `make dev` in < 10 min (api, web, postgres, redis).  
+> Sprint 1 adds RabbitMQ, Celery, n8n, MinIO, observability, Alembic baseline, staging deploy, and `make verify-platform`.
 
 ---
 
@@ -13,91 +16,31 @@
 
 ```mermaid
 flowchart LR
-    subgraph Sprint1Deliverables["Sprint 1 Deliverables"]
-        MONO[Monorepo scaffold]
-        DOCKER[Docker Compose stack]
-        CI[GitHub Actions CI]
-        APPS[Empty web + api apps]
-        TOOL[Lint, format, pre-commit]
-    end
-
-    MONO --> DOCKER --> APPS
-    MONO --> CI
-    MONO --> TOOL
-    APPS --> STG[Deploy to staging ECS]
+    S0[Sprint 0<br/>Core 4 services] --> S1[Sprint 1<br/>Full stack]
+    S1 --> RMQ[RabbitMQ + Celery]
+    S1 --> N8N[n8n internal]
+    S1 --> S3[MinIO]
+    S1 --> OBS[OTel + Grafana]
+    S1 --> GATE[verify-platform ✅]
+    GATE --> S2[Sprint 2 auth allowed]
 ```
 
 ---
 
 ## Stories
 
-### Story LEX-101 — Monorepo scaffold (8 SP)
+### Story LEX-104 — Docker Compose full stack (8 SP)
 
 **As a** developer  
-**I want** the monorepo folder structure scaffolded per architecture docs  
-**So that** all code has a consistent home
+**I want** the remaining platform services in Compose  
+**So that** async, storage, and orchestration paths are available locally
 
 **Acceptance Criteria:**
-- [ ] Folder structure matches [`docs/folder-structure.md`](../folder-structure.md) / [`.ai/rules/folder-structure.md`](../../.ai/rules/folder-structure.md)
-- [ ] `apps/web`, `apps/api`, `services/`, `workers/`, `packages/`, `infra/`, `n8n/` created
-- [ ] Root `Makefile` with `setup`, `dev`, `test`, `lint` targets
-- [ ] `.env.example` with all required vars documented (no values)
-- [ ] Root `README.md` updated with dev quickstart
-
-**Labels:** `sprint-1`, `infra`  
-**Component:** `infra`
-
----
-
-### Story LEX-102 — FastAPI application shell (5 SP)
-
-**As a** backend developer  
-**I want** an empty FastAPI app with middleware stubs  
-**So that** Sprint 2 can add auth and routes
-
-**Acceptance Criteria:**
-- [ ] `apps/api` with `main.py`, config (pydantic-settings), health endpoint `GET /health`
-- [ ] Middleware placeholders: correlation ID, CORS, request logging
-- [ ] OpenAPI at `/api/v1/docs` (dev only)
-- [ ] Dockerfile multi-stage build
-- [ ] `pyproject.toml` with FastAPI, SQLAlchemy, Alembic, Pydantic v2
-
-**Labels:** `sprint-1`, `backend`  
-**Component:** `backend`
-
----
-
-### Story LEX-103 — Next.js application shell (5 SP)
-
-**As a** frontend developer  
-**I want** an empty Next.js App Router app with design tokens  
-**So that** Sprint 2 can add auth UI
-
-**Acceptance Criteria:**
-- [ ] Next.js 14+ App Router with `(auth)` and `(dashboard)` route groups
-- [ ] Tailwind + ShadCN initialized; design tokens from [`docs/16-design-system/foundation/`](../16-design-system/foundation/design-tokens.md)
-- [ ] App shell layout (header, sidebar placeholder) per design system
-- [ ] Dockerfile for production build
-- [ ] Health/status page at `/`
-
-**Labels:** `sprint-1`, `frontend`  
-**Component:** `frontend`
-
----
-
-### Story LEX-104 — Docker Compose local stack (8 SP)
-
-**As a** developer  
-**I want** `docker compose up` to start the full local stack  
-**So that** I can develop without manual service installation
-
-**Acceptance Criteria:**
-- [ ] Services: web, api, postgres (pgvector), redis, rabbitmq, n8n (internal network), worker, minio
-- [ ] PostgreSQL 16 with pgvector extension enabled
+- [ ] Add to existing Compose: `rabbitmq`, `worker`, `n8n` (internal only), `minio`, `otel-collector`, `grafana`
+- [ ] `make dev-full` or extended `make dev` starts all services
 - [ ] RabbitMQ management UI on `:15672` (dev only)
-- [ ] n8n not exposed on public port (internal Docker network only)
-- [ ] `make dev` starts stack; `make down` tears down
-- [ ] Documented in [`docs/14-playbooks/local-dev-setup.md`](../14-playbooks/local-dev-setup.md)
+- [ ] n8n **not** on public port
+- [ ] Documented in [`local-dev-setup.md`](../14-playbooks/local-dev-setup.md)
 
 **Labels:** `sprint-1`, `infra`  
 **Component:** `infra`
@@ -107,14 +50,14 @@ flowchart LR
 ### Story LEX-105 — Alembic migration baseline (3 SP)
 
 **As a** backend developer  
-**I want** Alembic configured with empty baseline migration  
-**So that** Sprint 2 schema migrations apply cleanly
+**I want** Alembic configured with empty schema baseline  
+**So that** Sprint 2 identity migrations apply cleanly
 
 **Acceptance Criteria:**
-- [ ] Alembic initialized in `apps/api/alembic/`
-- [ ] Baseline migration creates schemas: `identity`, `cases`, `documents`, `workflows`, `ai`, `audit`, `shared`
-- [ ] `make migrate` runs upgrades; `make migrate-down` runs downgrade
-- [ ] Migration runs in Docker Compose on api startup (optional flag)
+- [ ] Alembic in `apps/api/alembic/`
+- [ ] Baseline creates empty schemas: `identity`, `cases`, `documents`, `workflows`, `ai`, `audit`, `shared`
+- [ ] **No business tables** in Sprint 1
+- [ ] `make migrate` / `make migrate-down`
 
 **Labels:** `sprint-1`, `backend`, `database`  
 **Component:** `backend`
@@ -123,113 +66,126 @@ flowchart LR
 
 ### Story LEX-106 — Celery worker shell (5 SP)
 
-**As a** backend developer  
-**I want** Celery app configured with RabbitMQ broker  
-**So that** Sprint 4 async tasks have a worker ready
-
 **Acceptance Criteria:**
-- [ ] `workers/celery/app.py` with Celery factory
-- [ ] RabbitMQ connection from env vars
-- [ ] Health check task `ping` returns pong
-- [ ] Worker container in Docker Compose
-- [ ] Structured logging with correlation ID propagation stub
+- [ ] `workers/celery/app.py` with Celery factory + RabbitMQ broker
+- [ ] `ping` task returns `pong`
+- [ ] Worker in Compose; correlation ID in logs
 
 **Labels:** `sprint-1`, `backend`  
 **Component:** `backend`
 
 ---
 
-### Story LEX-107 — GitHub Actions CI pipeline (8 SP)
+### Story LEX-107 — CI pipeline expansion (5 SP)
 
 **As a** team  
-**I want** CI on every PR to `main`  
-**So that** broken code cannot merge
+**I want** full CI including integration smoke and container scan  
+**So that** platform regressions cannot merge
 
 **Acceptance Criteria:**
-- [ ] Workflow: lint → typecheck → unit test → build Docker images
-- [ ] Python: ruff, mypy; TypeScript: eslint, tsc
-- [ ] Branch protection requires CI pass + 1 approval
-- [ ] Trivy container scan (block CRITICAL)
-- [ ] CI completes < 10 minutes for empty apps
+- [ ] Extend Sprint 0 CI: integration smoke, Docker image build, Trivy (block CRITICAL)
+- [ ] `make verify-platform` in CI (or subset on PR, full on main)
+- [ ] CI < 12 minutes
 
 **Labels:** `sprint-1`, `infra`, `ci`  
 **Component:** `infra`
 
 ---
 
-### Story LEX-108 — Pre-commit hooks & code quality tooling (3 SP)
-
-**As a** developer  
-**I want** pre-commit hooks for lint and format  
-**So that** CI failures are caught locally
+### Story LEX-111 — Observability local stack (Grafana + OTel) (5 SP)
 
 **Acceptance Criteria:**
-- [ ] pre-commit config: ruff, mypy (api), eslint + prettier (web)
-- [ ] Commit message lint (conventional commits optional warning)
-- [ ] Documented in [`.ai/rules/git-workflow.md`](../../.ai/rules/git-workflow.md)
+- [ ] OTel Collector OTLP `:4317`; Grafana + Tempo on `:3001`
+- [ ] API + worker export spans
+- [ ] `make verify-traces` passes
 
-**Labels:** `sprint-1`, `infra`  
+**Labels:** `sprint-1`, `infra`, `observability`  
 **Component:** `infra`
 
 ---
 
-### Story LEX-109 — Shared packages scaffold (3 SP)
-
-**As a** frontend developer  
-**I want** `packages/shared` and `packages/ui` initialized  
-**So that** types and components can be shared
+### Story LEX-112 — Platform integration smoke tests (8 SP)
 
 **Acceptance Criteria:**
-- [ ] `packages/shared` with TypeScript config
-- [ ] `packages/ui` placeholder with ShadCN export pattern
-- [ ] Workspace linking in root package.json (pnpm or npm workspaces)
+- [ ] `make verify-platform` — all 10 checks from [platform-readiness-gate.md](../14-playbooks/platform-readiness-gate.md)
+- [ ] Scripts in `scripts/verify/`; tests in `tests/integration/`
+- [ ] **No business logic** in tests — infrastructure proof only
 
-**Labels:** `sprint-1`, `frontend`  
-**Component:** `frontend`
+**Labels:** `sprint-1`, `infra`, `backend`  
+**Component:** `infra`
 
 ---
 
 ### Story LEX-110 — Staging ECS deploy (empty apps) (7 SP)
 
-**As a** DevOps engineer  
-**I want** web + api deployed to staging ECS  
-**So that** we validate AWS pipeline before feature work
-
 **Acceptance Criteria:**
-- [ ] Terraform modules stubbed for dev/staging ([`docs/09-deployment/`](../09-deployment/README.md))
-- [ ] ECR repositories for web and api
-- [ ] ECS Fargate services deploy on merge to `main`
-- [ ] ALB health checks pass for `/health`
-- [ ] Staging URL documented (internal/VPN if required)
+- [ ] Terraform stubs; ECR for web + api
+- [ ] ECS Fargate on merge to `main`; ALB `/health` 200
 
 **Labels:** `sprint-1`, `infra`, `aws`  
 **Component:** `infra`
 
 ---
 
+### Story LEX-113 — App shell hardening (3 SP)
+
+**As a** developer  
+**I want** Sprint 0 shells extended with platform middleware stubs  
+**So that** Sprint 2 plugs in auth without restructuring
+
+**Acceptance Criteria:**
+- [ ] API: OpenAPI at `/api/v1/docs` (dev); SQLAlchemy + Alembic deps added; internal webhook route stub (returns 501)
+- [ ] Web: `(auth)` and `(dashboard)` route groups — **empty layouts only**, no auth logic
+- [ ] Still **no business routes or domain code**
+
+**Labels:** `sprint-1`, `backend`, `frontend`  
+**Component:** `backend`
+
+---
+
+## Moved to Sprint 0 (do not re-implement)
+
+| Old ID | Story | Now |
+|--------|-------|-----|
+| LEX-101 | Monorepo scaffold | LEX-001 |
+| LEX-102 | FastAPI shell | LEX-002 |
+| LEX-103 | Next.js shell | LEX-003 |
+| LEX-104 (core) | Compose core four | LEX-004 |
+| LEX-108 | Pre-commit | LEX-007 |
+| LEX-109 | Packages | LEX-006 |
+
+---
+
 ## Sprint 1 Exit Criteria
 
-- [ ] `make dev` brings up full stack locally
-- [ ] `GET /health` returns 200 on api (local + staging)
-- [ ] Next.js app loads in browser (local + staging)
-- [ ] CI green on `main`
-- [ ] No secrets in repository
-- [ ] Team can clone, setup, and run in < 30 minutes
+### Platform Readiness Gate (required before Sprint 2)
+
+All 10 checks in [`platform-readiness-gate.md`](../14-playbooks/platform-readiness-gate.md) — see Sprint 1 doc for table.
+
+```bash
+make verify-platform   # must exit 0
+```
+
+### Additional
+
+- [ ] Full stack `make dev` works on top of Sprint 0 quickstart
+- [ ] Staging ECS `/health` 200
+- [ ] Still **zero business code**
 
 ---
 
 ## Demo
 
-1. Live `make dev` from clean clone
-2. Show staging URLs loading empty apps
-3. Show CI pipeline on sample PR
-4. Walk through monorepo structure
+1. Sprint 0 quickstart recap (< 10 min)
+2. `make dev-full` — show all containers
+3. `make verify-platform` live
+4. Grafana trace for sample request
+5. Staging URLs
 
 ---
 
 ## References
 
-- [Deployment Architecture](../09-deployment/README.md)
-- [Docker Containers](../09-deployment/docker-containers.md)
-- [CI/CD Pipeline](../09-deployment/cicd-pipeline.md)
-- [Local Dev Playbook](../14-playbooks/local-dev-setup.md)
+- [Sprint 0 — Engineering Setup](./sprint-00-documentation.md)
+- [10-Minute Quickstart](../14-playbooks/10-minute-quickstart.md)
+- [Platform Readiness Gate](../14-playbooks/platform-readiness-gate.md)

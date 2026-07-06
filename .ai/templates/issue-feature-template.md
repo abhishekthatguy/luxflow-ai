@@ -73,6 +73,11 @@ assignees: ''
 - [ ] New workflow: ___
 - [ ] Modified workflow: ___
 
+## RFC Required?
+
+- [ ] No — bug fix, small change, or exempt work
+- [ ] Yes — link: [RFC-___](../../docs/18-rfc/) (must be **Accepted** before dev starts)
+
 ## ADR Required?
 
 - [ ] No

@@ -11,6 +11,35 @@ Trunk-based development with short-lived feature branches. `main` is always depl
 
 ---
 
+## Commit Author (Repository Default)
+
+All commits in **`abhishekthatguy/luxflow-ai`** use:
+
+| Field | Value |
+|-------|-------|
+| **Name** | `abhishek` |
+| **Email** | `abhishekthatguy@gmail.com` |
+
+Per-commit (without changing global git config):
+
+```bash
+export GIT_AUTHOR_NAME="abhishek"
+export GIT_AUTHOR_EMAIL="abhishekthatguy@gmail.com"
+export GIT_COMMITTER_NAME="abhishek"
+export GIT_COMMITTER_EMAIL="abhishekthatguy@gmail.com"
+git commit -m "your message"
+```
+
+Or one line:
+
+```bash
+GIT_AUTHOR_NAME="abhishek" GIT_AUTHOR_EMAIL="abhishekthatguy@gmail.com" \
+GIT_COMMITTER_NAME="abhishek" GIT_COMMITTER_EMAIL="abhishekthatguy@gmail.com" \
+git commit -m "your message"
+```
+
+---
+
 ## Branching Model
 
 ```

@@ -79,6 +79,10 @@ flowchart TD
     F -->|Yes| G[make test]
     F -->|No| H[Troubleshooting section]
     G --> I[Ready to develop]
+    G --> V{make verify-platform?}
+    V -->|Before Sprint 2| J[Platform Readiness Gate]
+    V -->|Sprint 1 only| I
+    J --> I
     H --> E
 ```
 
@@ -392,6 +396,7 @@ See [../08-security/secrets-management.md](../08-security/secrets-management.md)
 | Document | Description |
 |----------|-------------|
 | [onboarding.md](./onboarding.md) | First-week guide |
+| [platform-readiness-gate.md](./platform-readiness-gate.md) | Verify infra before auth/business logic |
 | [../09-deployment/docker-containers.md](../09-deployment/docker-containers.md) | Container inventory and Compose topology |
 | [../09-deployment/environment-strategy.md](../09-deployment/environment-strategy.md) | Local vs cloud environment mapping |
 | [../development-standards.md](../development-standards.md) | Code style and PR process |

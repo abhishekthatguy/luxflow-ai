@@ -36,6 +36,8 @@ Every ticket must have:
 - [ ] **Schema impact noted** — new tables, columns, or migrations needed?
 - [ ] **Matter wall impact assessed** — case-scoped? participant rules?
 - [ ] **ADR required?** — see [adr-process.md](./adr-process.md) decision tree
+- [ ] **RFC required?** — major feature needs Accepted [RFC](../../docs/18-rfc/README.md); link `RFC-NNN` in issue
+- [ ] **Platform readiness** — auth/domain/feature work blocked until [`platform-readiness-gate.md`](../../docs/14-playbooks/platform-readiness-gate.md) passes (Sprint 2+)
 - [ ] **Test strategy outlined** — unit, integration, E2E requirements
 
 ---
@@ -120,6 +122,7 @@ Required when ticket involves LLM calls, RAG, prompt templates, or AI-generated 
 - [ ] Security impact: {{none / low / high}}
 - [ ] Matter wall impact: {{none / case-scoped}}
 - [ ] ADR required: {{yes / no}}
+- [ ] RFC required: {{yes / no}} — link: RFC-___
 - [ ] Test strategy: {{unit / integration / e2e}}
 
 **Decision:** Ready / Needs Refinement / Blocked
@@ -134,5 +137,6 @@ Required when ticket involves LLM calls, RAG, prompt templates, or AI-generated 
 - [Definition of Done](./definition-of-done.md)
 - [Development Lifecycle](./development-lifecycle.md)
 - [ADR Process](./adr-process.md)
+- [RFC Process](./rfc-process.md)
 - [Issue Templates](../templates/)
 - [Product Non-Goals](../../docs/01-product/non-goals.md)
