@@ -67,6 +67,47 @@ export interface TimelineEvent {
   occurredAt: string;
 }
 
+export interface DocumentSummary {
+  id: string;
+  caseId: string;
+  title: string;
+  documentType: string;
+  status: string;
+  ocrStatus: string;
+  mimeType: string;
+  fileSizeBytes: number;
+  createdAt: string;
+}
+
+export interface JobStatus {
+  id: string;
+  jobType: string;
+  status: string;
+  progress: number;
+  result?: Record<string, unknown> | null;
+  error?: Record<string, unknown> | null;
+}
+
+export interface AISummary {
+  id: string;
+  caseId: string;
+  summaryType: string;
+  content?: string | null;
+  status: string;
+  model: string;
+  createdAt: string;
+}
+
+export interface WorkflowExecution {
+  id: string;
+  caseId?: string | null;
+  status: string;
+  correlationId: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+}
+
 export function isApiHealthy(response: ApiHealthResponse): boolean {
   return response.status === "ok" && response.service === "api";
 }

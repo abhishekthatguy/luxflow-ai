@@ -2,7 +2,7 @@
         verify-quickstart verify-platform verify-health verify-logging \
         verify-traces verify-redis verify-rabbitmq verify-celery \
         verify-n8n-callback verify-minio verify-integration verify-sprint3 \
-        test-e2e
+        verify-sprint4 test-e2e
 
 LEXFLOW_ENV ?= local
 export LEXFLOW_ENV
@@ -33,6 +33,9 @@ migrate-down:
 
 seed:
 	docker compose exec api python scripts/seed_dev.py
+
+seed-sprint4:
+	docker compose exec api python scripts/seed_sprint4.py
 
 lint:
 	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && ruff check src tests && mypy src
@@ -74,3 +77,9 @@ test-e2e:
 	@if [ ! -d node_modules/@playwright/test ]; then npm install; fi
 	@if [ ! -d .playwright-browsers ]; then PLAYWRIGHT_BROWSERS_PATH=$$(pwd)/.playwright-browsers npx playwright install chromium; fi
 	E2E_SKIP_WEB_SERVER=1 PLAYWRIGHT_BROWSERS_PATH=$$(pwd)/.playwright-browsers npm run test:e2e
+
+verify-sprint4:
+	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && pytest -q tests/test_auth.py tests/test_cases.py tests/test_documents.py
+	@chmod +x scripts/verify/sprint4.sh
+	@./scripts/verify/sprint4.sh
+	@echo "✅ Sprint 4 verification passed (SKIP allowed unless VERIFY_SPRINT4_STRICT=1)"

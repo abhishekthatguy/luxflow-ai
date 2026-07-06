@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     s3_access_key: str = "lexflow"
     s3_secret_key: str = "lexflowsecret"
     s3_bucket: str = "lexflow-local-documents"
+    s3_presign_endpoint: str = "http://localhost:9000"
+    n8n_internal_url: str = "http://n8n:5678"
+    n8n_webhook_secret: str = "dev-n8n-webhook-secret"
+    llm_provider: str = "stub"
     otel_exporter_otlp_endpoint: str | None = None
     otel_service_name: str = "lexflow-api"
     cors_origins: str = "http://localhost:3000"

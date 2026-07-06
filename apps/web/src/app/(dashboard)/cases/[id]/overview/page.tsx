@@ -1,10 +1,10 @@
 "use client";
 
 import type { CaseSummary, TimelineEvent } from "@lexflow/shared";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { CaseNav } from "@/components/case-nav";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { apiFetch, apiFetchList } from "@/lib/auth";
 
@@ -55,15 +55,7 @@ export default function CaseOverviewPage() {
           </p>
         </div>
         <nav className="flex gap-2 text-sm">
-          <Link href={`/cases/${caseId}/overview`} className="font-medium text-slate-900">
-            Overview
-          </Link>
-          <Link href={`/cases/${caseId}/timeline`} className="text-blue-700 hover:underline">
-            Timeline
-          </Link>
-          <Link href={`/cases/${caseId}/tasks`} className="text-blue-700 hover:underline">
-            Tasks
-          </Link>
+          {caseId && <CaseNav caseId={caseId} active="overview" />}
         </nav>
       </div>
 
