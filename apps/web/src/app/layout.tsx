@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+
+import { siteConfig } from "@/content/site";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LexFlow AI",
-  description: "Enterprise AI automation for law firms",
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
