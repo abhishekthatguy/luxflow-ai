@@ -21,7 +21,12 @@ class S3StorageClient:
             region_name="us-east-1",
         )
 
-    def put_object(self, key: str, body: bytes, content_type: str = "application/octet-stream") -> None:
+    def put_object(
+        self,
+        key: str,
+        body: bytes,
+        content_type: str = "application/octet-stream",
+    ) -> None:
         self._client.put_object(
             Bucket=self._bucket,
             Key=key,

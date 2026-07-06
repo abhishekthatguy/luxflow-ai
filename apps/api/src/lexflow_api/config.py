@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     otel_exporter_otlp_endpoint: str | None = None
     otel_service_name: str = "lexflow-api"
     cors_origins: str = "http://localhost:3000"
+    jwt_secret: str = "change-me-in-production-use-secrets-manager"
+    jwt_access_ttl_minutes: int = 60
 
     @property
     def database_url_sync(self) -> str:

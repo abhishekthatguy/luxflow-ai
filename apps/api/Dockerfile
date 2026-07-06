@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir pip
 COPY pyproject.toml README.md ./
 COPY alembic.ini ./
 COPY alembic ./alembic
+COPY scripts ./scripts
 COPY src ./src
 RUN pip install --no-cache-dir -e ".[dev]"
 EXPOSE 8000
@@ -16,6 +17,7 @@ FROM base AS prod
 COPY pyproject.toml README.md ./
 COPY alembic.ini ./
 COPY alembic ./alembic
+COPY scripts ./scripts
 COPY src ./src
 RUN pip install --no-cache-dir .
 EXPOSE 8000

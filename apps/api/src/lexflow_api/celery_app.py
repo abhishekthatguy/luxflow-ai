@@ -6,7 +6,7 @@ celery_app = Celery(
     "lexflow",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["lexflow_api.tasks.platform"],
+    include=["lexflow_api.tasks.platform", "lexflow_api.tasks.case_events"],
 )
 
 celery_app.conf.update(

@@ -47,6 +47,13 @@ logs/
 tmp/
 .local/
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+.playwright-browsers/
+
 # n8n — credentials never in repo
 n8n/credentials/*
 !n8n/credentials/.gitkeep

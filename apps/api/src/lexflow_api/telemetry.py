@@ -1,5 +1,6 @@
 import os
 
+from fastapi import FastAPI
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
@@ -17,10 +18,10 @@ def setup_telemetry(service_name: str, endpoint: str | None) -> None:
     exporter = OTLPSpanExporter(endpoint=endpoint, insecure=True)
     provider.add_span_processor(BatchSpanProcessor(exporter))
     trace.set_tracer_provider(provider)
-    CeleryInstrumentor().instrument()
+    CeleryInstrumentor().instrument()  # type: ignore[no-untyped-call]
 
 
-def instrument_fastapi(app: object) -> None:
+def instrument_fastapi(app: FastAPI) -> None:
     if not os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"):
         return
     FastAPIInstrumentor.instrument_app(app)

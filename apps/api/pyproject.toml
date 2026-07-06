@@ -19,11 +19,17 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-grpc>=1.28.0",
     "opentelemetry-instrumentation-fastapi>=0.49b0",
     "opentelemetry-instrumentation-celery>=0.49b0",
+    "pyjwt>=2.9.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.2.0",
+    "python-multipart>=0.0.12",
+    "email-validator>=2.2.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
     "httpx>=0.28.0",
     "ruff>=0.8.0",
     "mypy>=1.13.0",
@@ -55,9 +61,10 @@ strict = true
 packages = ["lexflow_api"]
 
 [[tool.mypy.overrides]]
-module = ["boto3", "botocore.*", "pika", "celery.*"]
+module = ["boto3", "botocore.*", "pika", "celery.*", "passlib.*", "jwt", "bcrypt"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+asyncio_mode = "auto"

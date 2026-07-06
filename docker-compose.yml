@@ -135,6 +135,8 @@ services:
       OTEL_SERVICE_NAME: lexflow-api
       CORS_ORIGINS: http://localhost:3000
       ENVIRONMENT: local
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      JWT_ACCESS_TTL_MINUTES: ${JWT_ACCESS_TTL_MINUTES:-60}
     depends_on:
       postgres:
         condition: service_healthy

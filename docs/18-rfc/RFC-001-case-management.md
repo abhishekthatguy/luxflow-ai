@@ -1,6 +1,6 @@
 # RFC-001: Case Management Module
 
-**Status:** Planned  
+**Status:** Accepted  
 **Author:** TBD  
 **Created:** 2026-07-06  
 **Sprint / Epic:** Sprint 3 — Case Management  

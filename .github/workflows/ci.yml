@@ -54,6 +54,16 @@ jobs:
           ./scripts/verify/traces.sh
           ./scripts/verify/integration.sh
           ./scripts/verify/n8n-callback.sh
+      - name: Seed dev data
+        run: docker compose exec -T api python scripts/seed_dev.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install Playwright and run E2E
+        run: |
+          npm install
+          npx playwright install chromium --with-deps
+          E2E_SKIP_WEB_SERVER=1 npm run test:e2e
       - name: Trivy scan API image
         uses: aquasecurity/trivy-action@0.28.0
         with:

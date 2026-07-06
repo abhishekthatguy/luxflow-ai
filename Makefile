@@ -1,7 +1,8 @@
-.PHONY: setup dev dev-full down ps logs lint test migrate migrate-down \
+.PHONY: setup dev dev-full down ps logs lint test migrate migrate-down seed \
         verify-quickstart verify-platform verify-health verify-logging \
         verify-traces verify-redis verify-rabbitmq verify-celery \
-        verify-n8n-callback verify-minio verify-integration
+        verify-n8n-callback verify-minio verify-integration verify-sprint3 \
+        test-e2e
 
 LEXFLOW_ENV ?= local
 export LEXFLOW_ENV
@@ -29,6 +30,9 @@ migrate:
 
 migrate-down:
 	docker compose exec api alembic -c alembic.ini downgrade -1
+
+seed:
+	docker compose exec api python scripts/seed_dev.py
 
 lint:
 	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && ruff check src tests && mypy src
@@ -58,3 +62,15 @@ verify-integration:
 
 verify-platform: verify-health verify-logging verify-traces verify-integration verify-n8n-callback
 	@echo "✅ Platform readiness gate passed"
+
+verify-sprint3:
+	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && pytest -q tests/test_auth.py tests/test_cases.py
+	@chmod +x scripts/verify/sprint3.sh
+	@./scripts/verify/sprint3.sh
+	@echo "✅ Sprint 3 auth + case management tests passed"
+
+test-e2e:
+	@echo "Running Playwright E2E (requires stack on :3000 + :8000 — use: make dev && make seed)"
+	@if [ ! -d node_modules/@playwright/test ]; then npm install; fi
+	@if [ ! -d .playwright-browsers ]; then PLAYWRIGHT_BROWSERS_PATH=$$(pwd)/.playwright-browsers npx playwright install chromium; fi
+	E2E_SKIP_WEB_SERVER=1 PLAYWRIGHT_BROWSERS_PATH=$$(pwd)/.playwright-browsers npm run test:e2e
