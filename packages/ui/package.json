@@ -1,0 +1,17 @@
+{
+  "name": "@lexflow/ui",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "scripts": {
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Lint and test API
+        run: |
+          cd apps/api
+          pip install -e ".[dev]"
+          ruff check src tests
+          mypy src
+          pytest -q
+
+  lint-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Lint web
+        run: |
+          npm install
+          cd apps/web && npm run lint
+
+  quickstart-smoke:
+    runs-on: ubuntu-latest
+    needs: [lint-api, lint-web]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start core stack
+        run: |
+          cp .env.example .env
+          docker compose up -d --build
+      - name: Verify quickstart
+        run: |
+          chmod +x scripts/verify/quickstart.sh
+          ./scripts/verify/quickstart.sh
+      - name: Teardown
+        if: always()
+        run: docker compose down -v

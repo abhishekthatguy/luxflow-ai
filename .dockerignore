@@ -1,0 +1,11 @@
+.git
+.ai
+docs
+node_modules
+.next
+.venv
+__pycache__
+*.md
+!apps/api/README.md
+.env
+.env.*

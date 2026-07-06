@@ -4,13 +4,13 @@
 
 LexFlow AI eliminates repetitive manual work for lawyers, paralegals, legal assistants, and operations teams — without replacing legal judgment.
 
-**Status:** Sprint 0 — engineering setup (docs complete; application scaffold in progress).
+**Status:** Sprint 1 Phase 1 (Option B) — core scaffold shipped; run `make setup && make dev`. Phase 2 adds full platform stack.
 
 ---
 
 ## Quick Start (10 minutes)
 
-**Sprint 0 goal:** clone → developing with no business code.
+**Goal:** clone → developing with no business code.
 
 ```bash
 git clone git@github.com:abhishekthatguy/luxflow-ai.git

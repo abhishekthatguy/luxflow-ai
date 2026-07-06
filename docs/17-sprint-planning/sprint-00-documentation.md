@@ -41,7 +41,9 @@ flowchart LR
     OK -->|No| FIX[Troubleshoot playbook]
 ```
 
-**Timed verification:** Tech lead runs [10-minute quickstart](./../14-playbooks/10-minute-quickstart.md) on a **clean machine** (or fresh Docker volume) before Sprint 0 sign-off.
+**Option B (active):** Sprint 0 **planning and docs** are complete. **LEX-001–010 implementation runs as Sprint 1 Phase 1** (Week 1), then LEX-104+ as Phase 2 (Week 2).
+
+Timed verification: [10-minute quickstart](../14-playbooks/10-minute-quickstart.md) — required before Phase 2 platform work.
 
 ---
 

@@ -32,8 +32,8 @@ gantt
 
 | Sprint | Theme | Story Points (Target) | Primary Outcome |
 |--------|-------|----------------------|-----------------|
-| [Sprint 0](./sprint-00-documentation.md) | **Engineering setup** — clone to dev in < 10 min | 34 | `make setup && make dev`; no business code |
-| [Sprint 1](./sprint-01-infrastructure.md) | Full platform stack + readiness gate | 42 | `make verify-platform` passes; still no business code |
+| [Sprint 0](./sprint-00-documentation.md) | **Planning** — engineering setup spec (code in Sprint 1 Phase 1) | 34 | Spec + quickstart playbook |
+| [Sprint 1](./sprint-01-infrastructure.md) | **Phase 1:** LEX-001–010 scaffold · **Phase 2:** full platform | 76 | `verify-quickstart` then `verify-platform` |
 | [Sprint 2](./sprint-02-auth-domain.md) | Auth, RBAC, core domain models | 62 | Login works; matter walls enforced; migrations baseline |
 | [Sprint 3](./sprint-03-case-management.md) | Case Management module | 68 | Full case CRUD UI + API; timeline; participants |
 | [Sprint 4](./sprint-04-ai-n8n.md) | AI services + n8n orchestration | 72 | Async AI summary; document pipeline; first workflow |
