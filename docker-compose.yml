@@ -203,6 +203,11 @@ services:
       target: dev
     ports:
       - "3000:3000"
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/public:/app/apps/web/public
+      - ./packages/shared/src:/app/packages/shared/src
+      - ./packages/ui/src:/app/packages/ui/src
     env_file:
       - .env
     environment:

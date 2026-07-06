@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth";
 const NAV: { href: string; label: string; roles?: string[] }[] = [
   { href: "/cases", label: "Cases" },
   { href: "/clients", label: "Clients" },
+  { href: "/links", label: "My Tools" },
   { href: "/audit", label: "Audit", roles: ["ManagingPartner", "SystemAdministrator"] },
 ];
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from lexflow_api.api.internal.n8n import router as internal_n8n_router
@@ -81,11 +81,13 @@ def create_app() -> FastAPI:
     configure_logging(settings.log_level)
     setup_telemetry(settings.otel_service_name, settings.otel_exporter_otlp_endpoint)
 
+    docs_enabled = settings.environment == "local"
     app = FastAPI(
         title="LexFlow AI API",
         version="0.1.0",
-        docs_url="/api/v1/docs" if settings.environment == "local" else None,
-        redoc_url=None,
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
     )
     origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
     app.add_middleware(
@@ -105,6 +107,12 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok", "service": "api"}
+
+    if docs_enabled:
+
+        @app.get("/api/v1/docs", include_in_schema=False)
+        async def legacy_docs_redirect() -> RedirectResponse:
+            return RedirectResponse(url="/docs", status_code=307)
 
     return app
 
