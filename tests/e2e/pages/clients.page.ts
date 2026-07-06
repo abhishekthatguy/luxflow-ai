@@ -5,6 +5,7 @@ export class ClientsPage {
 
   async goto() {
     await this.page.goto("/clients");
+    await this.page.getByRole("heading", { name: "Clients" }).waitFor();
   }
 
   clientLink(name: string) {

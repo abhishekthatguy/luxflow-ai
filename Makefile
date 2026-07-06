@@ -82,4 +82,6 @@ verify-sprint4:
 	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && pytest -q tests/test_auth.py tests/test_cases.py tests/test_documents.py
 	@chmod +x scripts/verify/sprint4.sh
 	@./scripts/verify/sprint4.sh
-	@echo "✅ Sprint 4 verification passed (SKIP allowed unless VERIFY_SPRINT4_STRICT=1)"
+	@echo "✅ Sprint 4 API verification passed"
+	@$(MAKE) test-e2e
+	@echo "✅ Sprint 4 verification passed (API + E2E)"

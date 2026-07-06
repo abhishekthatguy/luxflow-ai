@@ -1,0 +1,6 @@
+LexFlow AI E2E sample document.
+
+This text file is uploaded during Playwright Sprint 4 tests.
+It should be extracted by the OCR pipeline and appear in document status as ready.
+
+Case context: service qualification evidence for automated testing.

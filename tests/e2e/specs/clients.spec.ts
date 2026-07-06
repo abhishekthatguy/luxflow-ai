@@ -11,7 +11,7 @@ test.describe("Clients", () => {
     const clients = new ClientsPage(page);
     await clients.goto();
     await expect(page.getByRole("heading", { name: "Clients" })).toBeVisible();
-    await expect(clients.clientRow("Acme Corporation")).toBeVisible();
+    await expect(clients.clientRow("Acme Corporation")).toBeVisible({ timeout: 15_000 });
 
     await page
       .getByRole("listitem")

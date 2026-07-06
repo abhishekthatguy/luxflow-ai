@@ -55,7 +55,9 @@ jobs:
           ./scripts/verify/integration.sh
           ./scripts/verify/n8n-callback.sh
       - name: Seed dev data
-        run: docker compose exec -T api python scripts/seed_dev.py
+        run: |
+          docker compose exec -T api python scripts/seed_dev.py
+          docker compose exec -T api python scripts/seed_sprint4.py
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
