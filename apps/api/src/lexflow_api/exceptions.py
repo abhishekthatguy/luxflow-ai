@@ -71,6 +71,16 @@ class ValidationAppError(AppError):
         )
 
 
+class RateLimitError(AppError):
+    def __init__(self, detail: str = "Too many requests. Try again later.") -> None:
+        super().__init__(
+            status=429,
+            title="Too Many Requests",
+            detail=detail,
+            type_suffix="rate-limit",
+        )
+
+
 def _request_meta(request: Request) -> dict[str, Any]:
     correlation_id = getattr(request.state, "correlation_id", None) or str(uuid4())
     return {

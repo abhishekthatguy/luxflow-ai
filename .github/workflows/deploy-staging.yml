@@ -1,0 +1,24 @@
+name: Deploy Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type deploy to confirm staging promotion"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.event.inputs.confirm == 'deploy'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pre-deploy checks
+        run: |
+          echo "Staging deploy gate — Terraform apply and ECS rollout are manual follow-ups."
+          echo "See infra/terraform/staging/README.md"
+      - name: Run migrations (placeholder)
+        run: echo "TODO: alembic upgrade head on staging ECS task"
+      - name: Post-deploy smoke (placeholder)
+        run: echo "TODO: curl staging /health and verify-sprint5 against staging URL"

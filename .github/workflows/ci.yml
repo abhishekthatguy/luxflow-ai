@@ -58,6 +58,11 @@ jobs:
         run: |
           docker compose exec -T api python scripts/seed_dev.py
           docker compose exec -T api python scripts/seed_sprint4.py
+          docker compose exec -T api python scripts/seed_sprint5.py
+      - name: Sprint 4 strict smoke
+        run: VERIFY_SPRINT4_STRICT=1 ./scripts/verify/sprint4.sh
+      - name: Sprint 5 smoke
+        run: ./scripts/verify/sprint5.sh
       - uses: actions/setup-node@v4
         with:
           node-version: "20"

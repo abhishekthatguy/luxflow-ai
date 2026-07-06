@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { CommandPalette } from "@/components/command-palette";
+import { NotificationBell } from "@/components/notification-bell";
 import { useAuth } from "@/lib/auth";
 
-const NAV = [
+const NAV: { href: string; label: string; roles?: string[] }[] = [
   { href: "/cases", label: "Cases" },
   { href: "/clients", label: "Clients" },
+  { href: "/audit", label: "Audit", roles: ["ManagingPartner", "SystemAdministrator"] },
 ];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -32,13 +35,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
+      <CommandPalette />
       <aside className="w-56 border-r border-slate-200 bg-slate-50 p-4">
-        <p className="text-lg font-semibold text-slate-900">LexFlow AI</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-lg font-semibold text-slate-900">LexFlow AI</p>
+          <NotificationBell />
+        </div>
         <p className="mt-1 text-xs text-slate-500">
           {user.firstName} {user.lastName}
         </p>
         <nav className="mt-6 flex flex-col gap-1">
-          {NAV.map((item) => (
+          {NAV.filter(
+            (item) =>
+              !("roles" in item) ||
+              item.roles?.some((r) => user.roles.includes(r)),
+          ).map((item) => (
             <Link
               key={item.href}
               href={item.href}

@@ -108,6 +108,32 @@ export interface WorkflowExecution {
   createdAt: string;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  firmId: string;
+  actorId?: string | null;
+  action: string;
+  resourceType: string;
+  resourceId?: string | null;
+  details: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  caseId?: string | null;
+  firmId: string;
+  channel: string;
+  title: string;
+  body: string;
+  status: string;
+  readAt?: string | null;
+  sentAt?: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
 export function isApiHealthy(response: ApiHealthResponse): boolean {
   return response.status === "ok" && response.service === "api";
 }

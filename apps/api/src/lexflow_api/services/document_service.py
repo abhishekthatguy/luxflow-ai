@@ -115,6 +115,12 @@ class DocumentService:
         if size != document.file_size_bytes:
             raise ConflictError("Uploaded file size does not match declared size.")
 
+        from lexflow_api.services.virus_scan import scan_object_stub
+
+        scan = scan_object_stub(s3_key=document.s3_key, mime_type=document.mime_type)
+        if not scan.clean:
+            raise ConflictError(f"Virus scan failed: {scan.detail or 'infected file'}")
+
         version = DocumentVersion(
             document_id=document.id,
             version_number=1,
@@ -159,6 +165,17 @@ class DocumentService:
             action="document.upload.confirmed",
             resource_type="document",
             resource_id=document.id,
+            details={"caseId": str(document.case_id), "title": document.title},
+        )
+        from lexflow_api.services.notification_service import NotificationService
+
+        await NotificationService(self._session).create_in_app(
+            user_id=user.id,
+            firm_id=user.firm_id,
+            case_id=document.case_id,
+            title="Document uploaded",
+            body=f"{document.title} is ready for processing.",
+            metadata={"documentId": str(document.id), "caseId": str(document.case_id)},
         )
 
         from lexflow_api.tasks.document_tasks import process_document_ocr

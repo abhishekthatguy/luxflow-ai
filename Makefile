@@ -2,7 +2,7 @@
         verify-quickstart verify-platform verify-health verify-logging \
         verify-traces verify-redis verify-rabbitmq verify-celery \
         verify-n8n-callback verify-minio verify-integration verify-sprint3 \
-        verify-sprint4 test-e2e
+        verify-sprint4 verify-sprint5 test-e2e n8n-import
 
 LEXFLOW_ENV ?= local
 export LEXFLOW_ENV
@@ -36,6 +36,12 @@ seed:
 
 seed-sprint4:
 	docker compose exec api python scripts/seed_sprint4.py
+
+seed-sprint5:
+	docker compose exec api python scripts/seed_sprint5.py
+
+n8n-import:
+	python3 scripts/n8n/import-workflows.py
 
 lint:
 	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && ruff check src tests && mypy src
@@ -79,9 +85,15 @@ test-e2e:
 	E2E_SKIP_WEB_SERVER=1 PLAYWRIGHT_BROWSERS_PATH=$$(pwd)/.playwright-browsers npm run test:e2e
 
 verify-sprint4:
-	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && pytest -q tests/test_auth.py tests/test_cases.py tests/test_documents.py
+	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && pytest -q tests/test_auth.py tests/test_cases.py tests/test_documents.py tests/test_sprint5.py
 	@chmod +x scripts/verify/sprint4.sh
-	@./scripts/verify/sprint4.sh
+	@VERIFY_SPRINT4_STRICT=1 ./scripts/verify/sprint4.sh
 	@echo "✅ Sprint 4 API verification passed"
 	@$(MAKE) test-e2e
 	@echo "✅ Sprint 4 verification passed (API + E2E)"
+
+verify-sprint5:
+	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && pytest -q tests/test_sprint5.py
+	@chmod +x scripts/verify/sprint5.sh
+	@./scripts/verify/sprint5.sh
+	@echo "✅ Sprint 5 verification passed"

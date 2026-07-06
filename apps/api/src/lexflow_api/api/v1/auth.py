@@ -14,14 +14,29 @@ def _request_id(request: Request) -> str | None:
     return getattr(request.state, "correlation_id", None)
 
 
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 @router.post("/login", response_model=Envelope[TokenResponse])
 async def login(
     request: Request,
     body: LoginRequest,
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[TokenResponse]:
+    from lexflow_api.auth.rate_limit import check_login_rate_limit
+
+    check_login_rate_limit(_client_ip(request))
     service = AuthService(session)
-    tokens, _user = await service.login(body.email, body.password)
+    tokens, user = await service.login(body.email, body.password)
+    logger = __import__("logging").getLogger("lexflow.api")
+    logger.info(
+        "auth_login_success",
+        extra={"userId": str(user.id), "firmId": str(user.firm_id), "correlationId": _request_id(request)},
+    )
     return envelope(tokens, _request_id(request))
 
 

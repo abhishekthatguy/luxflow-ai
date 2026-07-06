@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import sys
 import time
 import uuid
@@ -11,16 +12,33 @@ from starlette.responses import Response
 
 logger = logging.getLogger("lexflow.api")
 
+_EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
+_PHONE_RE = re.compile(r"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b")
+
+
+def redact_pii(text: str) -> str:
+    text = _EMAIL_RE.sub("[REDACTED_EMAIL]", text)
+    return _PHONE_RE.sub("[REDACTED_PHONE]", text)
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         payload = {
             "timestamp": self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:%S.%fZ"),
             "level": record.levelname,
-            "message": record.getMessage(),
+            "message": redact_pii(record.getMessage()),
             "service": "api",
         }
-        for key in ("correlationId", "method", "path", "statusCode", "durationMs"):
+        for key in (
+            "correlationId",
+            "method",
+            "path",
+            "statusCode",
+            "durationMs",
+            "userId",
+            "firmId",
+            "caseId",
+        ):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
         return json.dumps(payload)
