@@ -1,0 +1,43 @@
+---
+description: LexFlow AI core invariants and architecture — always apply
+alwaysApply: true
+---
+
+# LexFlow AI — Core Invariants
+
+Read `.ai/memory/PROJECT.md` and `.ai/memory/INVARIANTS.md` before any implementation.
+
+## Architecture Pipeline
+
+```
+Frontend (Next.js) → FastAPI → RabbitMQ → Celery → n8n (private) → External
+```
+
+## Non-Negotiable Rules
+
+1. **Business logic in FastAPI** (`services/`) — NEVER in n8n or frontend
+2. **n8n is private** — orchestration only; no public access; no PostgreSQL nodes
+3. **Frontend never calls n8n** — all via FastAPI REST API
+4. **Async AI only** — LLM via Celery worker; API returns 202 Accepted
+5. **Matter walls** — unauthorized case access returns **404** (not 403)
+6. **Human-in-the-loop** — legal AI outputs require attorney approval
+7. **Transactional outbox** — events atomic with DB writes
+8. **Immutable audit logs** — append-only for all mutating operations
+9. **Case-scoped RAG** — vector search always filters by case_id
+10. **No secrets in code** — AWS Secrets Manager only
+
+## Context Loading
+
+| Task | Load |
+|------|------|
+| Any | `.ai/memory/INVARIANTS.md` |
+| API | `.ai/tasks/create-api.md` + `.ai/rules/backend-standards.md` |
+| UI | `.ai/tasks/create-ui.md` + `.ai/rules/frontend-standards.md` |
+| Workflow | `.ai/tasks/create-workflow.md` + `.ai/rules/workflow-standards.md` |
+| Review | `.ai/tasks/review-code.md` + `.ai/rules/code-review-checklist.md` |
+
+Full index: `.ai/README.md` · Full docs: `docs/README.md` · ADRs: `docs/13-decisions/`
+
+## Domain Language
+
+Use **Case** (not Ticket/Issue), **Matter Wall**, **Client**, **Workflow**, **Summary**. See `.ai/memory/GLOSSARY.md`.

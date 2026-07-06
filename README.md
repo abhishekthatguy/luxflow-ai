@@ -1,0 +1,94 @@
+# LexFlow AI
+
+**Enterprise AI Automation Platform for Law Firms**
+
+LexFlow AI eliminates repetitive manual work for lawyers, paralegals, legal assistants, and operations teams — without replacing legal judgment.
+
+**Status:** Pre-implementation — documentation phase complete.
+
+---
+
+## Repository
+
+This is the **sole Git repository** for LexFlow AI — product code, documentation, AI context, and infrastructure definitions live here only (not in other workspaces).
+
+| | |
+|---|---|
+| **GitHub (SSH)** | `git@github.com:abhishekthatguy/luxflow-ai.git` |
+| **GitHub (HTTPS)** | `https://github.com/abhishekthatguy/luxflow-ai` |
+| **Default branch** | `main` |
+
+```bash
+git clone git@github.com:abhishekthatguy/luxflow-ai.git
+cd luxflow-ai
+```
+
+> **Note:** The GitHub repository name is `luxflow-ai`; the product name is **LexFlow AI**. Local folder names may vary (`lexflow-AI`, `luxflow-ai`).
+
+---
+
+## Documentation & AI Context
+
+| Layer | Path | Purpose |
+|-------|------|---------|
+| **AI Context** | [`.ai/`](./.ai/README.md) | Context engineering for Cursor, Claude, Copilot — **start here for AI assistants** |
+| **Enterprise Docs** | [`docs/`](./docs/README.md) | Full documentation — 146 files across 15 folders |
+| **Agent Entry** | [`AGENTS.md`](./AGENTS.md) | Shared instructions for all AI coding tools |
+| **Claude Code** | [`CLAUDE.md`](./CLAUDE.md) | Claude-specific session bootstrap |
+
+**Engineers:** [Documentation Index](./docs/README.md) · **AI assistants:** [`.ai/README.md`](./.ai/README.md)
+
+| Section | Description |
+|---------|-------------|
+| [01-product](./docs/01-product/) | Vision, personas, capabilities, roadmap |
+| [02-domain](./docs/02-domain/) | DDD aggregates, events, ubiquitous language |
+| [03-architecture](./docs/03-architecture/) | C4 architecture, data flows, NFRs |
+| [04-api](./docs/04-api/) | REST API, auth, endpoints |
+| [05-database](./docs/05-database/) | PostgreSQL schemas, indexes, migrations |
+| [06-workflows](./docs/06-workflows/) | n8n orchestration (private, no business logic) |
+| [07-ai](./docs/07-ai/) | LLM providers, RAG, safety, human-in-the-loop |
+| [08-security](./docs/08-security/) | Threat model, encryption, compliance |
+| [09-deployment](./docs/09-deployment/) | AWS, Terraform, CI/CD, DR |
+| [10-testing](./docs/10-testing/) | Unit, integration, E2E, load, security |
+| [11-observability](./docs/11-observability/) | Logging, tracing, metrics, runbooks |
+| [12-ui](./docs/12-ui/) | Next.js frontend, design system, accessibility |
+| [13-decisions](./docs/13-decisions/) | Architecture Decision Records (8 ADRs) |
+| [14-playbooks](./docs/14-playbooks/) | Operational runbooks for engineers |
+| [15-interview](./docs/15-interview/) | System design interview preparation |
+| [16-design-system](./docs/16-design-system/) | Complete UI/UX design system |
+| [17-sprint-planning](./docs/17-sprint-planning/) | Sprint plans & Jira import (Sprints 0–5) |
+
+---
+
+## Architecture at a Glance
+
+```
+Frontend (Next.js) → FastAPI → Queue (RabbitMQ) → Workers (Celery) → n8n → External Services
+                         ↕                              ↕
+                    PostgreSQL + pgvector            Redis + S3
+```
+
+**Platform invariants:**
+- Business logic lives in **FastAPI** — never in n8n or the frontend
+- **n8n** is a private orchestration engine — not publicly accessible
+- All **AI processing** is asynchronous with attorney approval for legal outputs
+- **Matter walls** enforce case-level access control
+- **Immutable audit logs** for all significant actions
+
+---
+
+## Scale Targets
+
+| Metric | Target |
+|--------|--------|
+| Concurrent users | 1,000+ |
+| Workflow executions | 50,000+ / month |
+| Documents | Millions |
+| Availability | 99.9% |
+| RPO / RTO | ≤ 15 min / ≤ 4 hours |
+
+---
+
+## License
+
+Proprietary — All rights reserved.

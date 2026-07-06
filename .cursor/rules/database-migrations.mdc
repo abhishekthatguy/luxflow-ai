@@ -1,0 +1,38 @@
+---
+description: LexFlow AI database schema and Alembic migration standards
+globs: apps/api/alembic/**/*.py,**/*schema*.md
+alwaysApply: false
+---
+
+# Database Standards
+
+Follow `.ai/rules/backend-standards.md` and `docs/05-database/`.
+
+## Conventions
+
+- UUID primary keys: `gen_random_uuid()`
+- `firm_id UUID NOT NULL` on all tenant-scoped tables
+- `created_at`, `updated_at TIMESTAMPTZ` on all tables
+- `deleted_at TIMESTAMPTZ` for soft delete (user-facing entities)
+- `version INTEGER NOT NULL DEFAULT 1` for optimistic concurrency
+- Schema separation: `identity`, `cases`, `documents`, `workflows`, `ai`, `audit`, `shared`
+
+## Migrations
+
+- Tool: Alembic in `apps/api/alembic/versions/`
+- Every migration must have `upgrade()` AND `downgrade()`
+- Large tables: `CREATE INDEX CONCURRENTLY`
+- Destructive changes: expand-contract pattern across two deploys
+- Reference: `.ai/patterns/alembic-migration-pattern.md`, `docs/05-database/migrations.md`
+
+## pgvector
+
+- Embeddings in `documents.document_embeddings` with HNSW index
+- Always filter by `case_id` in retrieval queries
+
+## Before Creating a Table
+
+1. Identify bounded context and schema
+2. Check `docs/05-database/schema-overview.md`
+3. Follow `.ai/tasks/create-database-table.md`
+4. Add indexes per `docs/05-database/indexing-strategy.md`

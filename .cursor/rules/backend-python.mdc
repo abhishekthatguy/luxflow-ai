@@ -1,0 +1,57 @@
+---
+description: LexFlow AI backend standards — FastAPI, DDD, hexagonal architecture
+globs: apps/api/**/*.py,services/**/*.py,workers/**/*.py
+alwaysApply: false
+---
+
+# Backend Standards
+
+Follow `.ai/rules/backend-standards.md` and `.ai/patterns/` for all Python backend work.
+
+## Layer Rules
+
+```
+apps/api/src/api/v1/     → Thin HTTP adapters only
+services/{ctx}/domain/   → Entities, events, repo interfaces (no framework imports)
+services/{ctx}/application/ → Use cases (commands/queries)
+services/{ctx}/infrastructure/ → SQLAlchemy repos, S3, external adapters
+workers/celery/tasks/    → Consume messages, call use cases
+```
+
+**Dependency direction:** domain ← application ← infrastructure. Never reverse.
+
+## Every API Endpoint Must
+
+1. Authenticate JWT via middleware
+2. Authorize RBAC + matter wall (case-scoped resources)
+3. Validate input with Pydantic v2
+4. Delegate to application use case (not inline logic)
+5. Return `{ data, meta }` envelope or RFC 7807 error
+6. Write audit log for mutating operations
+7. Propagate `correlationId` in logs
+
+## Every Use Case Must
+
+1. Enforce domain invariants
+2. Write outbox event in same transaction as domain change
+3. Be idempotent where messages can redeliver
+4. Never import from `apps/api/` or n8n
+
+## Database
+
+- UUID PKs, `firm_id` on tenant tables, `version` for optimistic concurrency
+- Alembic migrations with reversible `downgrade()`
+- Schema per bounded context: `identity`, `cases`, `documents`, `workflows`, `ai`, `audit`, `shared`
+- Reference: `docs/05-database/`
+
+## Async / AI
+
+- Never call LLM providers synchronously in request handlers
+- Publish to RabbitMQ, return 202 with jobId
+- Reference: ADR-004, `.ai/patterns/celery-task-pattern.md`
+
+## Testing
+
+- Domain tests: zero external dependencies
+- Integration: Testcontainers; matter wall matrix mandatory
+- Reference: `.ai/rules/testing-standards.md`

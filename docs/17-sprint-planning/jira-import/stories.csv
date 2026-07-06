@@ -1,0 +1,102 @@
+Issue Key,Issue Type,Summary,Description,Epic Link,Story Points,Priority,Labels,Components,Sprint,Acceptance Criteria
+LEX-001,Story,Documentation inventory & gap analysis,Sprint 0: Verify docs/01-16 and .ai/ gap analysis. Output: gap-analysis.md.,Documentation & Alignment,5,High,sprint-0|docs,docs,Sprint 0,"- All doc folders indexed
+- Gap report published
+- Conflicts flagged
+- .ai/ cross-checked"
+LEX-002,Story,Architecture review & sign-off,"Review C4, ADRs 001-008, platform invariants. Tech Lead sign-off.",Documentation & Alignment,8,High,sprint-0|architecture,docs,Sprint 0,"- C4 L1-L3 reviewed
+- 8 ADRs discussed
+- Invariants walkthrough
+- Review notes published"
+LEX-003,Story,Security & compliance doc review,"STRIDE, matter walls, RBAC matrix, ABA/GDPR mapping.",Documentation & Alignment,5,High,sprint-0|security,docs,Sprint 0,"- Threat model reviewed
+- ADR-007 understood
+- Compliance checklist for Sprint 2"
+LEX-004,Story,Design system review & UX alignment,Review docs/16-design-system. Approve MVP screens.,Documentation & Alignment,5,Medium,sprint-0|design,docs,Sprint 0,"- Design system reviewed
+- Case dashboard spec approved
+- Token mapping documented"
+LEX-005,Story,Database schema review,Review docs/05-database against domain model.,Documentation & Alignment,3,Medium,sprint-0|database,docs,Sprint 0,"- 7 schemas reviewed
+- Case/Client mapped to aggregates"
+LEX-006,Story,Sprint 1-5 backlog import & refinement,Import epics and stories to Jira. PO prioritizes Sprint 1.,Documentation & Alignment,5,High,sprint-0|planning,docs,Sprint 0,"- Epics LEX-E0 to E5 in Jira
+- Sprint 1 stories ready"
+LEX-007,Story,Dev environment prerequisites,"AWS, GitHub, secrets namespace, team access.",Documentation & Alignment,3,Highest,sprint-0|infra,infra,Sprint 0,"- AWS dev/staging access
+- GitHub branch protection
+- Team checklist 100%"
+LEX-101,Story,Monorepo scaffold,"Folder structure, Makefile, .env.example per architecture docs.",Platform Infrastructure,8,Highest,sprint-1|infra,infra,Sprint 1,"- Structure matches docs
+- make setup/dev/test/lint works"
+LEX-102,Story,FastAPI application shell,"Empty FastAPI with health, middleware stubs, Dockerfile.",Platform Infrastructure,5,Highest,sprint-1|backend,backend,Sprint 1,"- GET /health 200
+- OpenAPI dev only
+- Multi-stage Dockerfile"
+LEX-103,Story,Next.js application shell,"App Router, Tailwind, ShadCN, app shell layout.",Platform Infrastructure,5,Highest,sprint-1|frontend,frontend,Sprint 1,"- Route groups auth/dashboard
+- Design tokens applied"
+LEX-104,Story,Docker Compose local stack,"postgres pgvector, redis, rabbitmq, n8n internal, minio, worker.",Platform Infrastructure,8,Highest,sprint-1|infra,infra,Sprint 1,"- make dev starts all services
+- n8n not public port"
+LEX-105,Story,Alembic migration baseline,Create 7 schemas baseline migration.,Platform Infrastructure,3,High,sprint-1|database,backend,Sprint 1,- Alembic upgrade/downgrade works
+LEX-106,Story,Celery worker shell,"Celery + RabbitMQ, ping task, worker container.",Platform Infrastructure,5,High,sprint-1|backend,backend,Sprint 1,- ping task returns pong
+LEX-107,Story,GitHub Actions CI pipeline,"Lint, test, build, Trivy on PR.",Platform Infrastructure,8,Highest,sprint-1|ci,infra,Sprint 1,"- CI < 10 min
+- Branch protection enabled"
+LEX-108,Story,Pre-commit hooks & code quality,"ruff, mypy, eslint, prettier pre-commit.",Platform Infrastructure,3,Medium,sprint-1|infra,infra,Sprint 1,- pre-commit runs locally
+LEX-109,Story,Shared packages scaffold,packages/shared and packages/ui workspaces.,Platform Infrastructure,3,Medium,sprint-1|frontend,frontend,Sprint 1,- Workspace linking works
+LEX-110,Story,Staging ECS deploy empty apps,"Terraform stub, ECR, ECS Fargate staging.",Platform Infrastructure,7,High,sprint-1|aws,infra,Sprint 1,- Staging health checks pass
+LEX-201,Story,Identity schema migration,"firms, users, roles, permissions, refresh_tokens + seed.",Identity Auth & Domain Foundation,5,Highest,sprint-2|database,backend,Sprint 2,"- Migration matches identity-schema.md
+- 10 roles seeded"
+LEX-202,Story,JWT authentication API,"login, refresh, logout. ADR-005.",Identity Auth & Domain Foundation,8,Highest,sprint-2|security,backend,Sprint 2,"- RS256 JWT
+- Refresh rotation
+- Integration tests"
+LEX-203,Story,RBAC authorization middleware,"Permission decorator, role matrix tests.",Identity Auth & Domain Foundation,8,Highest,sprint-2|security,backend,Sprint 2,"- All roles tested
+- 403 for missing permission"
+LEX-204,Story,Matter wall enforcement,404 on unauthorized case access. ADR-007.,Identity Auth & Domain Foundation,8,Highest,sprint-2|matter-wall|security,backend,Sprint 2,"- 404 not 403
+- Audit on deny
+- Full test matrix"
+LEX-205,Story,Case & Client domain entities,"Hexagonal domain layer, invariants, unit tests.",Identity Auth & Domain Foundation,5,High,sprint-2|backend,backend,Sprint 2,"- No framework in domain
+- State machine tests"
+LEX-206,Story,Cases & Clients schema migration,"clients, cases, case_participants, timeline stub.",Identity Auth & Domain Foundation,5,High,sprint-2|database,backend,Sprint 2,- Indexes per docs
+LEX-207,Story,Audit log infrastructure,"Append-only audit_logs, middleware writer.",Identity Auth & Domain Foundation,5,High,sprint-2|security,backend,Sprint 2,"- INSERT only role
+- Integration test"
+LEX-208,Story,Transactional outbox setup,outbox_events + Celery publisher. ADR-006.,Identity Auth & Domain Foundation,5,High,sprint-2|backend,backend,Sprint 2,"- Same-transaction write
+- Publisher polls"
+LEX-209,Story,Login & auth UI,"Login page, token flow, logout.",Identity Auth & Domain Foundation,5,Highest,sprint-2|frontend,frontend,Sprint 2,- E2E login works
+LEX-210,Story,Admin user management UI stub,/admin/users list and create.,Identity Auth & Domain Foundation,3,Medium,sprint-2|frontend,frontend,Sprint 2,- SystemAdmin only
+LEX-211,Story,Auth & matter wall integration tests,Testcontainers full matrix. CI gate.,Identity Auth & Domain Foundation,5,Highest,sprint-2|matter-wall|qa,qa,Sprint 2,- CI blocks merge on fail
+LEX-301,Story,Client management API,"CRUD clients, link to cases.",Case Management Module,5,High,sprint-3|backend,backend,Sprint 3,"- RFC 7807 errors
+- Audit on mutate"
+LEX-302,Story,Case CRUD API,"CRUD cases, filters, ETag versioning.",Case Management Module,8,Highest,sprint-3|matter-wall,backend,Sprint 3,"- CaseCreated event
+- Matter wall enforced"
+LEX-303,Story,Case participants API,"Add/remove participants, roles.",Case Management Module,5,High,sprint-3|matter-wall,backend,Sprint 3,- Lead can manage participants
+LEX-304,Story,Tasks API,Case tasks CRUD.,Case Management Module,5,High,sprint-3|backend,backend,Sprint 3,- Task events emitted
+LEX-305,Story,Deadlines & hearings API,Deadlines and hearings CRUD.,Case Management Module,5,High,sprint-3|backend,backend,Sprint 3,- Calendar-friendly queries
+LEX-306,Story,Notes API,Case notes with visibility.,Case Management Module,3,Medium,sprint-3|backend,backend,Sprint 3,- Visibility levels enforced
+LEX-307,Story,Case timeline API,Paginated timeline events.,Case Management Module,5,High,sprint-3|backend,backend,Sprint 3,- Events from handlers
+LEX-308,Story,Case list & create UI,/cases table and create wizard.,Case Management Module,8,Highest,sprint-3|frontend,frontend,Sprint 3,- Matches data-tables spec
+LEX-309,Story,Case dashboard UI,/cases/[id]/overview per design spec.,Case Management Module,8,Highest,sprint-3|frontend,frontend,Sprint 3,"- KPI cards, tabs, widgets"
+LEX-310,Story,Case timeline UI,Timeline feed with filters.,Case Management Module,5,High,sprint-3|frontend,frontend,Sprint 3,- Matches timeline screen spec
+LEX-311,Story,Tasks & deadlines UI,"Task list, deadline urgency colors.",Case Management Module,5,High,sprint-3|frontend,frontend,Sprint 3,- Create/edit modals
+LEX-312,Story,Client management UI,/clients list and detail.,Case Management Module,3,Medium,sprint-3|frontend,frontend,Sprint 3,- Link to cases
+LEX-313,Story,Case management E2E tests,Playwright critical journeys.,Case Management Module,3,High,sprint-3|matter-wall|qa,qa,Sprint 3,- 404 matter wall test
+LEX-314,Story,Case domain event handlers,Idempotent handlers for timeline.,Case Management Module,3,High,sprint-3|backend,backend,Sprint 3,- CaseCreated handler
+LEX-401,Story,Documents schema & S3 integration,"documents, versions, S3 adapter.",AI Services & Workflow Orchestration,5,Highest,sprint-4|database,backend,Sprint 4,- Presigned URL support
+LEX-402,Story,Document upload API,3-step upload flow.,AI Services & Workflow Orchestration,8,Highest,sprint-4|matter-wall,backend,Sprint 4,- DocumentUploaded event
+LEX-403,Story,OCR processing pipeline,"Celery OCR task, DocumentProcessed.",AI Services & Workflow Orchestration,8,High,sprint-4|ai,backend,Sprint 4,- p95 < 10 min target
+LEX-404,Story,AI schema & prompt registry v1,"ai_summaries, prompt_templates seed.",AI Services & Workflow Orchestration,5,High,sprint-4|ai|database,backend,Sprint 4,- document-summary-v1 template
+LEX-405,Story,Async AI summary API,202 + job polling. ADR-004.,AI Services & Workflow Orchestration,8,Highest,sprint-4|ai,backend,Sprint 4,"- PII redaction
+- prompt_history logged"
+LEX-406,Story,AI summary approval API,Approve/reject by attorney.,AI Services & Workflow Orchestration,5,High,sprint-4|ai,backend,Sprint 4,- HITL enforced
+LEX-407,Story,n8n private deployment,"ECS internal, no public DNS. ADR-002.",AI Services & Workflow Orchestration,5,Highest,sprint-4|n8n,infra,Sprint 4,- Network scan fails public
+LEX-408,Story,Workflow execution schema & bridge,Executions + HMAC callbacks.,AI Services & Workflow Orchestration,5,High,sprint-4|n8n,backend,Sprint 4,- Trigger returns 202
+LEX-409,Story,First n8n workflow document-upload-notify-v1,"JSON in repo, CI promotion.",AI Services & Workflow Orchestration,5,High,sprint-4|n8n,n8n,Sprint 4,- No business logic in n8n
+LEX-410,Story,Document upload & list UI,"Drop zone, processing status.",AI Services & Workflow Orchestration,8,High,sprint-4|frontend,frontend,Sprint 4,- Matches document viewer spec
+LEX-411,Story,AI summary & approval UI,"Draft label, approve/reject.",AI Services & Workflow Orchestration,8,Highest,sprint-4|ai|frontend,frontend,Sprint 4,- AI disclaimer visible
+LEX-412,Story,Workflow status UI,Case workflows tab.,AI Services & Workflow Orchestration,5,Medium,sprint-4|n8n|frontend,frontend,Sprint 4,- Manual trigger works
+LEX-413,Story,LLM usage metering stub,"Token counts, daily aggregation.",AI Services & Workflow Orchestration,2,Low,sprint-4|ai,backend,Sprint 4,- llm_usage table populated
+LEX-414,Story,Sprint 4 integration & AI tests,Upload OCR summarize approve flow.,AI Services & Workflow Orchestration,3,High,sprint-4|matter-wall|qa,qa,Sprint 4,- Async 202 tested
+LEX-501,Story,Structured logging & correlation IDs,"JSON logs, PII redaction, CloudWatch.",Production Readiness & AWS Deployment,5,High,sprint-5|observability,infra,Sprint 5,- correlationId end-to-end
+LEX-502,Story,OpenTelemetry tracing,"OTel SDK, X-Ray export.",Production Readiness & AWS Deployment,5,High,sprint-5|observability,infra,Sprint 5,- Trace API to worker
+LEX-503,Story,Metrics & alerting,CloudWatch alarms P1-P2.,Production Readiness & AWS Deployment,5,High,sprint-5|observability,infra,Sprint 5,- DLQ alarm configured
+LEX-504,Story,AWS production infrastructure,"Terraform prod: RDS, ECS, MQ, S3, WAF.",Production Readiness & AWS Deployment,8,Highest,sprint-5|aws,infra,Sprint 5,- Multi-AZ RDS
+LEX-505,Story,CI/CD production promotion gate,"Manual approval, smoke tests, rollback.",Production Readiness & AWS Deployment,5,Highest,sprint-5|ci,infra,Sprint 5,- Rollback tested in staging
+LEX-506,Story,Security hardening,"WAF, rate limit, pen test, ZAP scan.",Production Readiness & AWS Deployment,8,Highest,sprint-5|security,backend,Sprint 5,- Zero cross-matter access
+LEX-507,Story,Load test baseline,"k6 100 VU, upload burst.",Production Readiness & AWS Deployment,5,High,sprint-5|qa,qa,Sprint 5,- p95 < 500ms
+LEX-508,Story,E2E test suite MVP,Playwright nightly staging.,Production Readiness & AWS Deployment,5,High,sprint-5|qa,qa,Sprint 5,- Full journey < 15 min
+LEX-509,Story,Command palette & global search,Cmd+K Linear-style.,Production Readiness & AWS Deployment,5,Medium,sprint-5|frontend,frontend,Sprint 5,- Case search works
+LEX-510,Story,Notifications in-app + email,"Bell SSE, SES stub.",Production Readiness & AWS Deployment,5,High,sprint-5|backend,backend,Sprint 5,- Task assigned email
+LEX-511,Story,Audit log viewer UI,/audit Compliance Officer view.,Production Readiness & AWS Deployment,3,Medium,sprint-5|frontend,frontend,Sprint 5,- Cursor pagination
+LEX-512,Story,Backup & DR verification,"PITR test, S3 versioning.",Production Readiness & AWS Deployment,3,High,sprint-5|aws,infra,Sprint 5,- Restore to staging clone
+LEX-513,Story,Production go-live & hypercare plan,"50 pilot users, Phase 1 exit.",Production Readiness & AWS Deployment,3,Highest,sprint-5|planning,docs,Sprint 5,- Exit criteria checklist signed

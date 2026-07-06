@@ -1,0 +1,42 @@
+---
+description: LexFlow AI n8n workflow rules — orchestration only, no business logic
+globs: n8n/**/*
+alwaysApply: false
+---
+
+# n8n Workflow Standards
+
+Follow `.ai/rules/workflow-standards.md` and ADR-002 (`docs/13-decisions/002-n8n-orchestration-only.md`).
+
+## n8n MAY
+
+- Call external HTTP APIs (Outlook, SharePoint, SES, court systems)
+- Transform payload format for external systems
+- Retry HTTP calls with configured backoff
+- Route on simple flags sent by FastAPI (e.g., `skipEmail: true`)
+- Callback to FastAPI internal webhook with HMAC signature
+
+## n8n MUST NOT
+
+- Contain business rules or legal logic
+- Make authorization decisions
+- Store authoritative case/client data
+- Write to PostgreSQL (no PostgreSQL nodes)
+- Be exposed to public internet
+- Directly notify end users without FastAPI audit trail
+
+## Workflow Naming
+
+`n8n/workflows/{domain}/{action}-v{N}.json` — e.g., `intake-new-client-v1.json`
+
+## Webhook Contract
+
+- FastAPI → n8n: `X-LexFlow-Signature`, `X-Correlation-Id`, `X-Execution-Id`
+- n8n → FastAPI: `X-N8N-Signature`, callback to `/api/v1/internal/webhooks/n8n/{slug}`
+- Reference: `docs/06-workflows/webhook-contracts.md`, `.ai/patterns/n8n-workflow-pattern.md`
+
+## Promotion
+
+Dev → staging (PR merge) → production (manual approval). Never activate smoke/test workflows for live traffic.
+
+Reference: `docs/06-workflows/promotion-pipeline.md`, `.ai/tasks/create-workflow.md`

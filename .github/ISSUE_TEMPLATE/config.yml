@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: LexFlow Engineering Handbook
+    url: https://github.com/lexflow-ai/lexflow-ai/blob/main/.ai/handbook/engineering-handbook.md
+    about: Engineering standards, lifecycle, and process documentation
+  - name: Documentation Index
+    url: https://github.com/lexflow-ai/lexflow-ai/blob/main/docs/README.md
+    about: Full architecture and product documentation (146 docs)

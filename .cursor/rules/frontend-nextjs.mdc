@@ -1,0 +1,49 @@
+---
+description: LexFlow AI frontend standards — Next.js, React Query, Zustand, ShadCN
+globs: apps/web/**/*.{ts,tsx},packages/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Standards
+
+Follow `.ai/rules/frontend-standards.md` and `.ai/patterns/react-page-pattern.md`.
+
+## Invariants
+
+- **Never call n8n, RabbitMQ, or internal webhooks from the browser**
+- **Never enforce security in UI** — reflect API permissions for UX only
+- **Never store secrets** in client code or localStorage (refresh token: httpOnly cookie)
+
+## State Boundaries
+
+| Tool | Use For | Never Use For |
+|------|---------|---------------|
+| React Query | Server data (cases, documents, API) | UI ephemeral state |
+| Zustand | Modals, sidebar, filters, UI prefs | Server/cache data |
+| URL params | Shareable filters, pagination | Sensitive data |
+
+## Component Rules
+
+- Server Components by default (App Router)
+- `"use client"` only when interactivity required
+- ShadCN UI primitives — do not modify generated ShadCN files
+- API calls via typed client in `lib/api-client.ts` + React Query hooks
+- Handle 404 gracefully for matter wall denials (do not leak case existence)
+
+## Async AI UX
+
+- POST returns 202 → poll `/api/v1/jobs/{id}` or subscribe to SSE
+- Show "AI draft — requires attorney review" on unapproved summaries
+- Reference: `.ai/examples/example-ai-summary-async.md`
+
+## Accessibility
+
+- WCAG 2.1 AA minimum
+- Reference: `docs/12-ui/accessibility.md`
+
+## File Placement
+
+- Pages: `apps/web/src/app/(dashboard)/{route}/page.tsx`
+- Components: `apps/web/src/components/{domain}/`
+- Hooks: `apps/web/src/hooks/use{Feature}.ts`
+- Stores: `apps/web/src/stores/{name}.ts`

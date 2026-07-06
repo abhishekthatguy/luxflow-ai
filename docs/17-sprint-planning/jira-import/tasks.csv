@@ -1,0 +1,16 @@
+Parent Story Key,Issue Type,Summary,Description,Priority,Components
+LEX-101,Sub-task,Create apps/ and services/ directory structure,Scaffold monorepo folders per folder-structure.md,High,infra
+LEX-101,Sub-task,Add Makefile with dev/test/lint targets,Root Makefile targets,High,infra
+LEX-101,Sub-task,Add .env.example with documented vars,No secret values,High,infra
+LEX-104,Sub-task,Configure postgres pgvector image,Docker compose postgres service,High,infra
+LEX-104,Sub-task,Configure n8n internal network only,No host port binding for n8n,Highest,infra
+LEX-202,Sub-task,Implement RS256 key loading,From env or Secrets Manager stub,High,backend
+LEX-202,Sub-task,Implement refresh token rotation,Revoke old on refresh,High,backend
+LEX-204,Sub-task,Write matter wall integration test matrix,All roles x case access,Highest,qa
+LEX-302,Sub-task,Implement CaseCreated outbox event,Same transaction as insert,High,backend
+LEX-405,Sub-task,Implement PII redaction before LLM,Scan and redact SSN patterns,High,backend
+LEX-405,Sub-task,Implement Celery AI summary task,Call Azure OpenAI adapter,High,backend
+LEX-407,Sub-task,Configure n8n ECS security group,Only worker/API ingress,Highest,infra
+LEX-504,Sub-task,Apply Terraform production module,RDS Multi-AZ ECS cluster,High,infra
+LEX-506,Sub-task,Run matter wall penetration test,External or internal security review,Highest,qa
+LEX-506,Sub-task,Run OWASP ZAP against staging,Document findings,High,qa

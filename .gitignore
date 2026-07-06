@@ -1,0 +1,55 @@
+# Environment & secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Docker
+.docker/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Logs & local data
+*.log
+logs/
+tmp/
+.local/
+
+# n8n — credentials never in repo
+n8n/credentials/*
+!n8n/credentials/.gitkeep
+
+# OS
+Thumbs.db

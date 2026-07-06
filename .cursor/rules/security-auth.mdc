@@ -1,0 +1,46 @@
+---
+description: LexFlow AI security — matter walls, auth, secrets, audit
+globs: apps/api/**/auth*.py,apps/api/**/middleware/**,services/**/identity/**,services/**/audit/**
+alwaysApply: false
+---
+
+# Security Rules
+
+Follow `.ai/rules/security-rules.md` and `docs/08-security/`.
+
+## Authentication
+
+- JWT access token (15 min, RS256) + refresh token (7 days, httpOnly cookie, rotated)
+- Permissions resolved server-side — NOT embedded in JWT claims
+- Reference: ADR-005, `docs/04-api/authentication.md`
+
+## Authorization — Matter Walls
+
+```text
+IF resource is case-scoped AND user lacks access:
+  RETURN 404 Not Found   ← NOT 403
+```
+
+- Check RBAC permission first, then matter wall (participant membership)
+- ManagingPartner and ComplianceOfficer bypass matter walls for read only
+- Reference: ADR-007, `docs/08-security/matter-walls.md`
+
+## Audit
+
+- Every mutating API call → append-only audit log
+- Document view/download logged
+- AI invocations logged (PII-redacted prompt copy)
+- Audit table: INSERT only for application role
+
+## Secrets
+
+- AWS Secrets Manager only — never in code, n8n repo, or logs
+- `.env.example` documents keys without values
+
+## AI Security
+
+- PII redaction before LLM calls
+- Case-scoped RAG only (filter by case_id)
+- No auto-send of AI output to clients or courts
+
+Reference: `.ai/tasks/review-security.md`
