@@ -70,7 +70,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const hb = $json.data ?? $json;\nreturn [{\n  json: {\n    sessionValid: Boolean(hb.sessionValid),\n    requiresInitialize: Boolean(hb.requiresInitialize),\n    sessionToken: hb.sessionToken || hb.session_token || $('Load Session Token').first().json.sessionToken,\n    message: hb.message || '',\n  }\n}];"
+        "jsCode": "const root = $json.body?.data ?? $json.body ?? $json.data ?? $json;\nconst validRaw = root.sessionValid ?? root.session_valid ?? root.authorized ?? false;\nconst valid = validRaw === true || validRaw === 'true';\nconst requiresInit = root.requiresInitialize ?? root.requires_initialize ?? false;\nreturn [{\n  json: {\n    sessionValid: valid,\n    sessionIsValid: valid ? 'yes' : 'no',\n    requiresInitialize: requiresInit === true || requiresInit === 'true',\n    sessionToken: root.sessionToken || root.session_token || $('Load Session Token').first().json.sessionToken || '',\n    message: root.message || '',\n  }\n}];"
       },
       "id": "merge-hb",
       "name": "Merge Heartbeat Result",
@@ -87,16 +87,16 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "loose"
           },
           "conditions": [
             {
               "id": "if-valid",
-              "leftValue": "={{ $json.sessionValid }}",
-              "rightValue": "",
+              "leftValue": "={{ $json.sessionIsValid }}",
+              "rightValue": "yes",
               "operator": {
-                "type": "boolean",
-                "operation": "true"
+                "type": "string",
+                "operation": "equals"
               }
             }
           ],

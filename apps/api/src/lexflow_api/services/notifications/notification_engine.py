@@ -148,6 +148,8 @@ class NotificationEngine:
                 in_app_count += 1
 
             if "email" in event.channels:
+                if not settings.is_deliverable_notification_email(recipient.email):
+                    continue
                 from lexflow_api.tasks.notification_tasks import deliver_email_notification
 
                 deliver_email_notification.delay(
@@ -280,7 +282,11 @@ class NotificationEngine:
             settings.admin_emails if event.include_admin_emails else []
         ):
             email = raw.strip()
-            if not email or email.lower() in seen:
+            if (
+                not email
+                or email.lower() in seen
+                or not settings.is_deliverable_notification_email(email)
+            ):
                 continue
             seen.add(email.lower())
             extras.append(

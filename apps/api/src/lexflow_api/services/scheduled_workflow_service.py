@@ -150,7 +150,10 @@ class ScheduledWorkflowService:
     async def _probe_rabbitmq(self) -> dict[str, object]:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get("http://rabbitmq:15672/api/overview")
+                response = await client.get(
+                    "http://rabbitmq:15672/api/overview",
+                    auth=("guest", "guest"),
+                )
             return {"ok": response.status_code == 200, "message": f"HTTP {response.status_code}"}
         except Exception as exc:
             logger.warning("rabbitmq health probe failed: %s", exc)

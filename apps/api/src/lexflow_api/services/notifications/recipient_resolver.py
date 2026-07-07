@@ -44,14 +44,17 @@ class RecipientResolver:
             user_roles = {r.name for r in user.roles}
             if not user_roles & role_set:
                 continue
-            email = user.email.strip().lower()
-            if email in seen_emails:
+            email = user.email.strip()
+            if not settings.is_deliverable_notification_email(email):
                 continue
-            seen_emails.add(email)
+            email_key = email.lower()
+            if email_key in seen_emails:
+                continue
+            seen_emails.add(email_key)
             recipients.append(
                 NotificationRecipient(
                     user_id=user.id,
-                    email=user.email,
+                    email=email,
                     display_name=f"{user.first_name} {user.last_name}".strip(),
                     roles=frozenset(user_roles),
                 )
@@ -59,16 +62,17 @@ class RecipientResolver:
 
         for role in role_set:
             fallback = settings.role_email_fallbacks.get(role)
-            if fallback and fallback.lower() not in seen_emails:
-                seen_emails.add(fallback.lower())
-                recipients.append(
-                    NotificationRecipient(
-                        user_id=None,
-                        email=fallback,
-                        display_name=role.replace("ManagingPartner", "Managing Partner"),
-                        roles=frozenset({role}),
+            if fallback and settings.is_deliverable_notification_email(fallback):
+                if fallback.lower() not in seen_emails:
+                    seen_emails.add(fallback.lower())
+                    recipients.append(
+                        NotificationRecipient(
+                            user_id=None,
+                            email=fallback,
+                            display_name=role.replace("ManagingPartner", "Managing Partner"),
+                            roles=frozenset({role}),
+                        )
                     )
-                )
 
         return recipients
 

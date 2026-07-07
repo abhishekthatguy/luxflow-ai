@@ -200,13 +200,17 @@ return [{ json: { sessionToken: staticData.sessionToken || '', expiresAt: static
 
 
 MERGE_HEARTBEAT_CODE = """
-const hb = $json.data ?? $json;
+const root = $json.body?.data ?? $json.body ?? $json.data ?? $json;
+const validRaw = root.sessionValid ?? root.session_valid ?? root.authorized ?? false;
+const valid = validRaw === true || validRaw === 'true';
+const requiresInit = root.requiresInitialize ?? root.requires_initialize ?? false;
 return [{
   json: {
-    sessionValid: Boolean(hb.sessionValid),
-    requiresInitialize: Boolean(hb.requiresInitialize),
-    sessionToken: hb.sessionToken || hb.session_token || $('Load Session Token').first().json.sessionToken,
-    message: hb.message || '',
+    sessionValid: valid,
+    sessionIsValid: valid ? 'yes' : 'no',
+    requiresInitialize: requiresInit === true || requiresInit === 'true',
+    sessionToken: root.sessionToken || root.session_token || $('Load Session Token').first().json.sessionToken || '',
+    message: root.message || '',
   }
 }];
 """.strip()
@@ -1056,7 +1060,31 @@ def build_session_heartbeat_workflow(schedule_node: dict) -> dict[str, Any]:
             with_session_token=True,
         ),
         code_node("merge-hb", "Merge Heartbeat Result", MERGE_HEARTBEAT_CODE, 900),
-        if_node("if-valid", "Decision: Session Valid?", "={{ $json.sessionValid }}", x=1120),
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": True,
+                        "leftValue": "",
+                        "typeValidation": "loose",
+                    },
+                    "conditions": [
+                        {
+                            "id": "if-valid",
+                            "leftValue": "={{ $json.sessionIsValid }}",
+                            "rightValue": "yes",
+                            "operator": {"type": "string", "operation": "equals"},
+                        }
+                    ],
+                    "combinator": "and",
+                }
+            },
+            "id": "if-valid",
+            "name": "Decision: Session Valid?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": _pos(1120),
+        },
         http_post_internal(
             "reinit",
             "Trigger Initialize Workflow",

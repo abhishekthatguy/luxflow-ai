@@ -64,9 +64,12 @@ async def test_slack_notification(request: Request) -> Envelope[dict[str, object
     cid = uuid4()
     message = build_slack_message(
         event_type=NotificationEventType.SYSTEM_ALERT,
-        title="LexFlow Slack test",
-        description="Team channel integration is working. You will receive follow-up alerts here.",
-        context={"status_badge": "Test", "workflow_slug": "slack-test"},
+        title="Slack notifications are connected",
+        description=(
+            "LexFlow can now post team alerts to this channel when cases are created, "
+            "workflows fail, or approvals are pending."
+        ),
+        context={"status_badge": "Connected", "workflow_slug": "slack-test"},
         correlation_id=cid,
     )
     n8n_url = (

@@ -138,8 +138,13 @@ def emit_notification_event(payload: dict[str, Any]) -> dict[str, Any]:
     retry_backoff_max=120,
 )
 def deliver_email_notification(self, payload: dict[str, object]) -> dict[str, object]:
-    to = str(payload["to"])
-    subject = str(payload["subject"])
+    intended_to = str(payload["to"])
+    if not settings.is_deliverable_notification_email(intended_to):
+        logger.info("EMAIL_SKIP undeliverable_demo_address to=%s", intended_to)
+        return {"status": "skipped", "to": intended_to, "reason": "demo_address"}
+
+    to, subject_prefix, redirected = settings.resolve_notification_email(intended_to)
+    subject = subject_prefix + str(payload["subject"])
     html_body = str(payload.get("html_body") or "")
     plain_body = str(payload.get("plain_body") or subject)
     firm_id = UUID(str(payload["firm_id"]))
@@ -170,7 +175,13 @@ def deliver_email_notification(self, payload: dict[str, object]) -> dict[str, ob
             ),
             latency_ms=int(result.get("latency_ms") or 0),
             error_message=str(result.get("error")) if result.get("error") else None,
-            payload={"to": to, "subject": subject, "eventType": payload.get("event_type")},
+            payload={
+                "to": to,
+                "intendedTo": intended_to,
+                "redirected": redirected,
+                "subject": subject,
+                "eventType": payload.get("event_type"),
+            },
             attempts=attempt,
         )
         session.commit()

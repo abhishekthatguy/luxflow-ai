@@ -58,7 +58,7 @@ def test_slack_message_has_blocks_and_actions() -> None:
     msg = build_slack_message(
         event_type=NotificationEventType.CLIENT_CREATED,
         title="New client: Gitlime",
-        description="Client onboarded — assign intake team.",
+        description="Gitlime was added to LexFlow and is ready for intake.",
         context={
             "client_name": "Gitlime",
             "client_email": "kashyapabhi688@gmail.com",
@@ -68,8 +68,43 @@ def test_slack_message_has_blocks_and_actions() -> None:
         },
         correlation_id=cid,
     )
-    assert "blocks" in msg
-    blocks = msg["blocks"]
+    attachments = msg["attachments"]
+    assert attachments
+    blocks = attachments[0]["blocks"]
     assert any(b.get("type") == "actions" for b in blocks)
     assert "Gitlime" in str(msg)
+    assert "client.created" not in str(blocks)
+    assert "What to do next" in str(blocks)
+
+
+def test_slack_case_created_human_readable() -> None:
+    cid = uuid4()
+    msg = build_slack_message(
+        event_type=NotificationEventType.CASE_CREATED,
+        title="New case opened",
+        description="",
+        context={
+            "case_title": "Smith v. Jones",
+            "case_number": "2026-00026",
+            "client_name": "John Smith",
+            "attorney_name": "Jane Attorney",
+            "case_url": "http://localhost:3000/cases/x/overview",
+            "status_badge": "Created",
+        },
+        correlation_id=cid,
+    )
+    attachments = msg["attachments"]
+    blocks_blob = str(attachments[0]["blocks"])
+    assert "Smith v. Jones" in blocks_blob
+    assert "2026-00026" in blocks_blob
+    assert "case.created" not in blocks_blob
+    assert "What to do next" in blocks_blob
+
+
+def test_demo_emails_not_deliverable() -> None:
+    from lexflow_api.config import settings
+
+    assert settings.is_deliverable_notification_email("partner@example.com") is False
+    assert settings.is_deliverable_notification_email("admin@example.com") is False
+    assert settings.is_deliverable_notification_email("clawtbot@gmail.com") is True
 

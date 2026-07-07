@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     n8n_notification_slack_slug: str = "notification-slack-v1"
     notification_max_retries: int = 4
     notification_retry_base_seconds: int = 2
+    # Local dev — route all workflow notification emails to one inbox (original To in subject)
+    notification_redirect_email: str = ""
 
     password_reset_ttl_minutes: int = 60
     portal_invite_ttl_hours: int = 72
@@ -120,6 +122,24 @@ class Settings(BaseSettings):
                     emails.append(line)
             return emails
         return []
+
+    def is_deliverable_notification_email(self, email: str) -> bool:
+        """Reject seed/demo addresses that cannot receive real SMTP mail."""
+        addr = email.strip().lower()
+        if not addr or "@" not in addr:
+            return False
+        blocked_suffixes = ("@example.com", "@lexflow.local", "@test.lexflow.ai")
+        if any(addr.endswith(suffix) for suffix in blocked_suffixes):
+            return False
+        return True
+
+    def resolve_notification_email(self, intended_to: str) -> tuple[str, str, bool]:
+        """Return (smtp_to, subject_prefix, redirected)."""
+        intended = intended_to.strip()
+        redirect = self.notification_redirect_email.strip()
+        if redirect and redirect.lower() != intended.lower():
+            return redirect, f"[For {intended}] ", True
+        return intended, "", False
 
     @property
     def database_url_sync(self) -> str:

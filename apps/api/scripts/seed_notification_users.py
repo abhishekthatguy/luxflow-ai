@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from sqlalchemy import select
 
 from lexflow_api.auth.password import hash_password
+from lexflow_api.config import settings
 from lexflow_api.db.session import async_session_factory
 from lexflow_api.models.identity import Firm, Role, User, UserRole
 
@@ -20,15 +21,45 @@ def _env(key: str, default: str = "") -> str:
     return os.environ.get(key, default).strip()
 
 
+# Env key, first, last, role — no @example.com fallbacks (real addresses only)
 USERS = [
-    ("MANAGING_PARTNER_EMAIL", "Managing", "Partner", "ManagingPartner", "partner@example.com"),
-    ("PARTNER_EMAIL", "Sam", "Partner", "Partner", "equity@example.com"),
-    ("ATTORNEY_EMAIL", "Jane", "Attorney", "Attorney", "jane@example.com"),
-    ("ASSOCIATE_EMAIL", "John", "Associate", "Associate", "john@example.com"),
-    ("PARALEGAL_EMAIL", "Alex", "Paralegal", "Paralegal", "alex@example.com"),
-    ("LEGAL_ASSISTANT_EMAIL", "Lisa", "Assistant", "LegalAssistant", "assistant@example.com"),
-    ("SYSTEM_ADMINISTRATOR_EMAIL", "Sys", "Admin", "SystemAdministrator", "admin@example.com"),
+    ("MANAGING_PARTNER_EMAIL", "Managing", "Partner", "ManagingPartner"),
+    ("PARTNER_EMAIL", "Sam", "Partner", "Partner"),
+    ("ATTORNEY_EMAIL", "Jane", "Attorney", "Attorney"),
+    ("ASSOCIATE_EMAIL", "John", "Associate", "Associate"),
+    ("PARALEGAL_EMAIL", "Alex", "Paralegal", "Paralegal"),
+    ("LEGAL_ASSISTANT_EMAIL", "Lisa", "Assistant", "LegalAssistant"),
+    ("SYSTEM_ADMINISTRATOR_EMAIL", "Sys", "Admin", "SystemAdministrator"),
 ]
+
+# Migrate legacy seed demo logins to env-configured real addresses
+DEMO_EMAIL_MIGRATIONS = [
+    ("admin@example.com", "SYSTEM_ADMINISTRATOR_EMAIL"),
+    ("partner@example.com", "MANAGING_PARTNER_EMAIL"),
+    ("equity@example.com", "PARTNER_EMAIL"),
+    ("jane@example.com", "ATTORNEY_EMAIL"),
+    ("john@example.com", "ASSOCIATE_EMAIL"),
+    ("alex@example.com", "PARALEGAL_EMAIL"),
+    ("assistant@example.com", "LEGAL_ASSISTANT_EMAIL"),
+]
+
+
+async def _migrate_demo_emails(session) -> None:
+    for old_email, env_key in DEMO_EMAIL_MIGRATIONS:
+        new_email = _env(env_key)
+        if not new_email or not settings.is_deliverable_notification_email(new_email):
+            continue
+        if new_email.lower() == old_email.lower():
+            continue
+        user = await session.scalar(select(User).where(User.email == old_email))
+        if user is None:
+            continue
+        conflict = await session.scalar(select(User).where(User.email == new_email))
+        if conflict is not None and conflict.id != user.id:
+            print(f"SKIP  migrate {old_email} — {new_email} already taken")
+            continue
+        user.email = new_email
+        print(f"OK    migrate {old_email} → {new_email}")
 
 
 async def seed() -> None:
@@ -37,6 +68,8 @@ async def seed() -> None:
         if firm is None:
             print("Run make seed first — firm lexflow-dev missing.")
             return
+
+        await _migrate_demo_emails(session)
 
         roles = {
             r.name: r
@@ -56,9 +89,12 @@ async def seed() -> None:
                 roles[name] = role
                 print(f"Added role: {name}")
 
-        for env_key, first, last, role_name, fallback in USERS:
-            email = _env(env_key, fallback)
+        for env_key, first, last, role_name in USERS:
+            email = _env(env_key)
             if not email:
+                continue
+            if not settings.is_deliverable_notification_email(email):
+                print(f"SKIP  {email} — demo/invalid address for {env_key}")
                 continue
             existing = await session.scalar(select(User).where(User.email == email))
             if existing:
