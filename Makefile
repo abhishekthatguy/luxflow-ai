@@ -45,6 +45,12 @@ seed-workflows:
 n8n-build:
 	python3 scripts/n8n/build_workflows.py
 
+n8n-validate:
+	python3 scripts/n8n/validate_workflows.py
+
+n8n-test-all:
+	python3 scripts/n8n/test_all_workflows.py
+
 n8n-docs:
 	python3 scripts/n8n/generate_workflow_docs.py
 

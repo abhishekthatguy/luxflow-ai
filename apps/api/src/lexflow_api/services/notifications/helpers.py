@@ -25,6 +25,7 @@ async def emit_case_notification(
     actor_id: UUID | None = None,
     recipient_user_ids: set[UUID] | None = None,
     context: dict[str, Any] | None = None,
+    include_admin_emails: bool = False,
 ):
     engine = NotificationEngine(session)
     return await engine.emit(
@@ -40,6 +41,7 @@ async def emit_case_notification(
             actor_id=actor_id,
             recipient_user_ids=recipient_user_ids,
             context=context or {},
+            include_admin_emails=include_admin_emails,
         )
     )
 

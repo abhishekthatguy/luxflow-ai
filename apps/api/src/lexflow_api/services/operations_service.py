@@ -558,8 +558,9 @@ class OperationsService:
             )
         ).scalars().all()
 
-        has_docs = len(docs) > 0
-        all_ocr_done = has_docs and all(d.ocr_status in ("completed", "skipped") for d in docs)
+        confirmed_docs = [d for d in docs if d.status not in ("pending_upload",)]
+        has_docs = len(confirmed_docs) > 0
+        all_ocr_done = has_docs and all(d.ocr_status in ("completed", "skipped") for d in confirmed_docs)
         has_draft = any(s.status == SummaryStatus.DRAFT for s in summaries)
         has_approved = any(s.status == SummaryStatus.APPROVED for s in summaries)
         has_generating = any(s.status == SummaryStatus.GENERATING for s in summaries)
@@ -568,20 +569,37 @@ class OperationsService:
         wf_needed = bool(workflows) or wf_running
 
         virus_done = has_docs and all(
-            d.status in ("uploaded", "processing", "ready") for d in docs
+            d.status in ("uploaded", "processing", "ready") for d in confirmed_docs
         )
+
+        ai_summary_done = all_ocr_done and (has_draft or has_approved)
+
+        if not has_docs:
+            idle_stages = [
+                PipelineStage(id=sid, label=label, status="pending")
+                for sid, label, _ in [
+                    ("uploaded", "Uploaded", False),
+                    ("virus_scan", "Virus Scan", False),
+                    ("ocr", "OCR", False),
+                    ("ai_summary", "AI Summary", False),
+                    ("human_approval", "Human Approval", False),
+                    ("workflow_triggered", "Workflow Triggered", False),
+                    ("completed", "Completed", False),
+                ]
+            ]
+            return CaseProcessingPipeline(
+                case_id=case.id,
+                stages=idle_stages,
+                current_stage=None,
+            )
 
         # Monotonic pipeline: later stages only complete when prerequisites are met.
         checkpoints: list[tuple[str, str, bool]] = [
             ("uploaded", "Uploaded", has_docs),
             ("virus_scan", "Virus Scan", virus_done),
             ("ocr", "OCR", all_ocr_done),
-            (
-                "ai_summary",
-                "AI Summary",
-                all_ocr_done and (has_draft or has_approved or has_generating),
-            ),
-            ("human_approval", "Human Approval", all_ocr_done and has_approved),
+            ("ai_summary", "AI Summary", ai_summary_done),
+            ("human_approval", "Human Approval", has_approved),
             (
                 "workflow_triggered",
                 "Workflow Triggered",
@@ -612,6 +630,13 @@ class OperationsService:
                 status = "pending"
             stages.append(PipelineStage(id=sid, label=label, status=status))
 
-        current = checkpoints[current_idx][0] if current_idx is not None else "completed"
+        if current_idx is None:
+            current = "completed"
+        elif checkpoints[current_idx][0] == "human_approval" and has_draft and not has_approved:
+            current = "human_approval"
+        elif checkpoints[current_idx][0] == "ai_summary" and has_generating and not has_draft:
+            current = "ai_summary"
+        else:
+            current = checkpoints[current_idx][0]
 
         return CaseProcessingPipeline(case_id=case.id, stages=stages, current_stage=current)

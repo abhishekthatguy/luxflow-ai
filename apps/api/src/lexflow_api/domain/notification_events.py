@@ -4,6 +4,10 @@ from enum import StrEnum
 
 
 class NotificationEventType(StrEnum):
+    CLIENT_CREATED = "client.created"
+    CLIENT_WELCOME = "client.welcome"
+    PORTAL_PASSWORD_SETUP = "portal.password.setup"
+    PASSWORD_RESET = "auth.password.reset"
     CASE_CREATED = "case.created"
     CASE_ASSIGNED = "case.assigned"
     DOCUMENT_UPLOADED = "document.uploaded"
@@ -20,6 +24,10 @@ class NotificationEventType(StrEnum):
 
 # Maps event type → Jinja2 email template (without .html)
 EMAIL_TEMPLATE_MAP: dict[NotificationEventType, str] = {
+    NotificationEventType.CLIENT_CREATED: "client-created",
+    NotificationEventType.CLIENT_WELCOME: "client-welcome",
+    NotificationEventType.PORTAL_PASSWORD_SETUP: "password-setup",
+    NotificationEventType.PASSWORD_RESET: "password-reset",
     NotificationEventType.CASE_CREATED: "case-created",
     NotificationEventType.CASE_ASSIGNED: "case-created",
     NotificationEventType.DOCUMENT_UPLOADED: "document-uploaded",

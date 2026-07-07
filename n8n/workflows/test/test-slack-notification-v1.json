@@ -1,0 +1,136 @@
+{
+  "name": "WF-15 \u00b7 Slack Notification Smoke Test",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "notes": "Manual only \u2014 edit test_mode in Pick Test Case. Do NOT activate. See test/slack-notification.test-cases.md"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Edit test_mode before Run (see n8n/workflows/test/slack-notification.test-cases.md)\nconst test_mode = 'client_created';\nconst correlationId = 'slack-test-' + ($execution.id || Date.now());\n\nfunction blockKit(title, description, fields) {\n  return {\n    text: title + ' \u2014 ' + description,\n    blocks: [\n      { type: 'header', text: { type: 'plain_text', text: title, emoji: true } },\n      { type: 'section', text: { type: 'mrkdwn', text: description } },\n      { type: 'section', fields: fields },\n      {\n        type: 'context',\n        elements: [{ type: 'mrkdwn', text: 'LexFlow test \u00b7 correlation `' + correlationId + '`' }],\n      },\n    ],\n  };\n}\n\nconst token = $env.SLACK_BOT_TOKEN || '';\nconst channel = $env.SLACK_TEAM_CHANNEL_ID || 'C0BF67RKS3Z';\nconst webhook = $env.SLACK_WEBHOOK_URL || '';\n\nconst cases = {\n  basic_text: {\n    route: 'n8n',\n    expectStatus: 'accepted',\n    body: {\n      correlationId,\n      slackBotToken: token || null,\n      slackChannelId: channel || null,\n      slackWebhookUrl: webhook || null,\n      message: { text: 'LexFlow Slack smoke \u2014 basic text from n8n editor' },\n      eventType: 'SYSTEM_ALERT',\n      workflowSlug: 'test-slack-notification-v1',\n    },\n  },\n  client_created: {\n    route: 'n8n',\n    expectStatus: 'accepted',\n    body: {\n      correlationId,\n      slackBotToken: token || null,\n      slackChannelId: channel || null,\n      slackWebhookUrl: webhook || null,\n      message: blockKit(\n        'New client onboarded',\n        'Gitlime was added to LexFlow (dummy WF-04 follow-up).',\n        [\n          { type: 'mrkdwn', text: '*Event*\\nCLIENT_CREATED' },\n          { type: 'mrkdwn', text: '*Client*\\nGitlime' },\n          { type: 'mrkdwn', text: '*Email*\\nkashyapabhi688@gmail.com' },\n          { type: 'mrkdwn', text: '*Workflow*\\nclient-created-v1' },\n        ],\n      ),\n      eventType: 'CLIENT_CREATED',\n      workflowSlug: 'client-created-v1',\n    },\n  },\n  case_created: {\n    route: 'n8n',\n    expectStatus: 'accepted',\n    body: {\n      correlationId,\n      slackBotToken: token || null,\n      slackChannelId: channel || null,\n      slackWebhookUrl: webhook || null,\n      message: blockKit(\n        'New case opened',\n        'Smith v. Jones \u2014 intake workflow started (dummy).',\n        [\n          { type: 'mrkdwn', text: '*Event*\\nCASE_CREATED' },\n          { type: 'mrkdwn', text: '*Case*\\nSmith v. Jones' },\n          { type: 'mrkdwn', text: '*Workflow*\\ncase-intake-v1' },\n        ],\n      ),\n      eventType: 'CASE_CREATED',\n      workflowSlug: 'case-intake-v1',\n    },\n  },\n  workflow_failed: {\n    route: 'n8n',\n    expectStatus: 'accepted',\n    body: {\n      correlationId,\n      slackBotToken: token || null,\n      slackChannelId: channel || null,\n      slackWebhookUrl: webhook || null,\n      message: blockKit(\n        'Workflow failed',\n        'document-upload-v1 step OCR callback timed out (dummy).',\n        [\n          { type: 'mrkdwn', text: '*Event*\\nWORKFLOW_FAILED' },\n          { type: 'mrkdwn', text: '*Status*\\nFailed' },\n          { type: 'mrkdwn', text: '*Workflow*\\ndocument-upload-v1' },\n        ],\n      ),\n      eventType: 'WORKFLOW_FAILED',\n      workflowSlug: 'document-upload-v1',\n    },\n  },\n  stub_no_credentials: {\n    route: 'n8n',\n    expectStatus: 'stub',\n    body: {\n      correlationId,\n      slackBotToken: null,\n      slackChannelId: null,\n      slackWebhookUrl: null,\n      message: { text: 'LexFlow stub test \u2014 no Slack credentials supplied' },\n      eventType: 'SYSTEM_ALERT',\n      workflowSlug: 'test-slack-notification-v1',\n    },\n  },\n  via_fastapi: {\n    route: 'fastapi',\n    expectStatus: 'sent',\n    url: 'http://api:8000/internal/notifications/slack/test',\n    body: {},\n  },\n};\n\nconst picked = cases[test_mode];\nif (!picked) {\n  throw new Error('Unknown test_mode: ' + test_mode + '. See slack-notification.test-cases.md');\n}\n\nconst postUrl = picked.route === 'fastapi'\n  ? picked.url\n  : 'http://n8n:5678/webhook/notification-slack-v1';\n\nreturn [{\n  json: {\n    test_mode,\n    route: picked.route,\n    expectStatus: picked.expectStatus,\n    correlationId,\n    postUrl,\n    body: picked.body || {},\n    hasCredentials: Boolean(token && channel) || Boolean(webhook),\n  },\n}];"
+      },
+      "id": "pick-case",
+      "name": "Pick Test Case",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.postUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "post-slack",
+      "name": "POST Slack Test",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ],
+      "notes": "Routes to notification-slack-v1 (n8n) or FastAPI /internal/notifications/slack/test"
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $('Pick Test Case').first().json;\nconst http = $('POST Slack Test').first().json;\nconst statusCode = http.statusCode ?? http.status ?? 200;\nlet actual = http.status ?? http.body?.status;\nif (!actual) {\n  actual = statusCode >= 400 ? 'failed' : (req.expectStatus === 'stub' ? 'stub' : 'accepted');\n}\nif (typeof actual === 'object') {\n  actual = actual.status || JSON.stringify(actual);\n}\nconst pass = String(actual) === String(req.expectStatus)\n  || (req.expectStatus === 'accepted' && String(actual) === 'accepted')\n  || (req.route === 'fastapi' && String(actual) === 'sent');\nreturn [{\n  json: {\n    pass,\n    test_mode: req.test_mode,\n    route: req.route,\n    expected: req.expectStatus,\n    actual: String(actual),\n    correlationId: req.correlationId,\n    postUrl: req.postUrl,\n    hasCredentials: req.hasCredentials,\n    hint: pass ? 'PASS \u2014 check Slack channel C0BF67RKS3Z for the message' : 'FAIL \u2014 inspect POST Slack Test node output',\n    response: http,\n  },\n}];"
+      },
+      "id": "report",
+      "name": "Report Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Pick Test Case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Test Case": {
+      "main": [
+        [
+          {
+            "node": "POST Slack Test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Slack Test": {
+      "main": [
+        [
+          {
+            "node": "Report Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-15"
+    }
+  ],
+  "meta": {
+    "purpose": "Manual Slack smoke \u2014 test notification-slack-v1 from n8n editor with dummy payloads.",
+    "domain_event": null,
+    "fastapi_trigger": "Manual only \u2014 n8n editor Execute Workflow",
+    "trigger": "Manual (n8n editor \u2014 do NOT activate)",
+    "input": {
+      "test_mode": "basic_text | client_created | case_created | workflow_failed | stub_no_credentials | via_fastapi"
+    },
+    "output": {
+      "pass": true,
+      "test_mode": "string",
+      "actual": "accepted|stub|sent"
+    },
+    "retries": 0,
+    "failure": "Inspect Report Result node \u2014 check SLACK_* env on n8n container",
+    "owner": "platform-team",
+    "version": 1,
+    "category": "test",
+    "group": "test",
+    "serial": 15,
+    "summary": "Manual Slack smoke \u2014 switch test_mode in Pick Test Case node."
+  }
+}

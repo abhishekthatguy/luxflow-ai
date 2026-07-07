@@ -98,6 +98,14 @@ export interface JobStatus {
   error?: Record<string, unknown> | null;
 }
 
+export interface NotificationDispatchSummary {
+  emailQueued?: number;
+  slackQueued?: number;
+  teamsQueued?: number;
+  inAppCount?: number;
+  correlationId?: string | null;
+}
+
 export interface AISummary {
   id: string;
   caseId: string;
@@ -106,6 +114,7 @@ export interface AISummary {
   status: string;
   model: string;
   createdAt: string;
+  notificationDispatch?: NotificationDispatchSummary | null;
 }
 
 export interface WorkflowExecution {

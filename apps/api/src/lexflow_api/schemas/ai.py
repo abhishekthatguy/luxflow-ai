@@ -12,6 +12,14 @@ class SummarizeRequest(CamelModel):
     document_id: UUID | None = None
 
 
+class NotificationDispatchSummary(CamelModel):
+    email_queued: int = 0
+    slack_queued: int = 0
+    teams_queued: int = 0
+    in_app_count: int = 0
+    correlation_id: str | None = None
+
+
 class AISummaryResponse(CamelModel):
     id: UUID
     case_id: UUID
@@ -28,6 +36,7 @@ class AISummaryResponse(CamelModel):
     requested_by: UUID
     created_at: datetime
     updated_at: datetime
+    notification_dispatch: NotificationDispatchSummary | None = None
 
 
 class SummaryRejectRequest(CamelModel):

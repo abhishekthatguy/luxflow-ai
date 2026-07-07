@@ -20,5 +20,9 @@ def document_upload_key(document_id: UUID | str) -> str:
     return workflow_event_key(slug="document-upload-v1", aggregate_id=document_id)
 
 
+def client_created_key(client_id: UUID | str) -> str:
+    return workflow_event_key(slug="client-created-v1", aggregate_id=client_id)
+
+
 def case_intake_key(case_id: UUID | str) -> str:
     return workflow_event_key(slug="case-intake-v1", aggregate_id=case_id)

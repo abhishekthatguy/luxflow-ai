@@ -57,8 +57,16 @@ class Settings(BaseSettings):
     notification_web_base_url: str = "http://localhost:3000"
     n8n_notification_email_slug: str = "notification-email-v1"
     n8n_notification_teams_slug: str = "notification-teams-v1"
+    n8n_notification_slack_slug: str = "notification-slack-v1"
     notification_max_retries: int = 4
     notification_retry_base_seconds: int = 2
+
+    password_reset_ttl_minutes: int = 60
+    portal_invite_ttl_hours: int = 72
+    portal_min_password_length: int = 12
+    password_reset_ip_limit: int = 10
+    password_reset_email_limit: int = 5
+    password_reset_window_sec: int = 3600
 
     # Role email fallbacks — used only when no DB user matches role (seed overrides)
     managing_partner_email: str = ""
@@ -66,6 +74,18 @@ class Settings(BaseSettings):
     associate_email: str = ""
     paralegal_email: str = ""
     system_administrator_email: str = ""
+
+    # Slack team follow-up channel — credentials forwarded to n8n notification-slack-v1
+    slack_webhook_url: str = ""
+    slack_bot_token: str = ""
+    slack_app_token: str = ""  # Socket Mode only; not used for channel posts
+    slack_team_channel_id: str = "C0BF67RKS3Z"
+
+    @property
+    def slack_configured(self) -> bool:
+        if self.slack_webhook_url.strip():
+            return True
+        return bool(self.slack_bot_token.strip() and self.slack_team_channel_id.strip())
 
     @property
     def mail_from(self) -> str:

@@ -543,6 +543,138 @@ Log + infra health-monitor alert
 
 ---
 
+### `notification-teams-v1` — WF-13 · Teams Notification Delivery
+
+| Field | Value |
+|-------|-------|
+| **Serial** | WF-13 |
+| **Group** | `notifications` |
+| **Owner** | platform-team |
+| **Version** | v1 |
+| **Trigger type** | `webhook` |
+| **Retries** | 3 |
+| **Repo path** | `n8n/workflows/notifications/notification-teams-v1.json` |
+
+#### Summary
+
+POST Adaptive Card payload to Microsoft Teams Incoming Webhook.
+
+#### Purpose
+
+Deliver pre-built Adaptive Card to Microsoft Teams Incoming Webhook.
+
+#### Domain event
+
+`NotificationTeamsRequested`
+
+#### FastAPI trigger
+
+NotificationEngine Celery deliver_teams_notification
+
+#### Webhook
+
+- **Local:** `POST http://localhost:5679/webhook/notification-teams-v1`
+- **Docker internal:** `POST http://n8n:5678/webhook/notification-teams-v1`
+
+#### Input payload
+
+```json
+{
+  "card": "object",
+  "teamsWebhookUrl": "string",
+  "correlationId": "string"
+}
+```
+
+#### Output payload
+
+```json
+{
+  "status": "accepted"
+}
+```
+
+#### Steps
+
+_No steps (manual trigger only)._
+
+#### Failure handling
+
+Retry with backoff; DLQ after max attempts
+
+#### Tags
+
+`wf-13`
+
+---
+
+### `notification-slack-v1` — WF-14 · Slack Notification Delivery
+
+| Field | Value |
+|-------|-------|
+| **Serial** | WF-14 |
+| **Group** | `notifications` |
+| **Owner** | platform-team |
+| **Version** | v1 |
+| **Trigger type** | `webhook` |
+| **Retries** | 3 |
+| **Repo path** | `n8n/workflows/notifications/notification-slack-v1.json` |
+
+#### Summary
+
+POST Block Kit payload to Slack via Bot API or Incoming Webhook.
+
+#### Purpose
+
+Deliver pre-built Block Kit message to Slack team channel.
+
+#### Domain event
+
+`NotificationSlackRequested`
+
+#### FastAPI trigger
+
+NotificationEngine Celery deliver_slack_notification
+
+#### Webhook
+
+- **Local:** `POST http://localhost:5679/webhook/notification-slack-v1`
+- **Docker internal:** `POST http://n8n:5678/webhook/notification-slack-v1`
+
+#### Input payload
+
+```json
+{
+  "message": "object",
+  "slackBotToken": "string",
+  "slackChannelId": "string",
+  "slackWebhookUrl": "string",
+  "correlationId": "string"
+}
+```
+
+#### Output payload
+
+```json
+{
+  "status": "accepted"
+}
+```
+
+#### Steps
+
+_No steps (manual trigger only)._
+
+#### Failure handling
+
+Retry with backoff; DLQ after max attempts
+
+#### Tags
+
+`wf-14`
+
+---
+
 ## Reports
 
 ### `daily-partner-report-v1` — WF-08 · Daily Partner Report
@@ -685,6 +817,121 @@ Self-alert via admin notification
 
 ---
 
+### `workflow-session-init-v1` — WF-11 · Workflow Session Initialize
+
+| Field | Value |
+|-------|-------|
+| **Serial** | WF-11 |
+| **Group** | `infra` |
+| **Owner** | platform-team |
+| **Version** | v1 |
+| **Trigger type** | `webhook` |
+| **Retries** | 0 |
+| **Repo path** | `n8n/workflows/infra/workflow-session-init-v1.json` |
+
+#### Summary
+
+Run once — create orchestrator session token in Redis (WF-11).
+
+#### Purpose
+
+Create orchestrator session in Redis — run once on deploy or when heartbeat detects expiry.
+
+#### FastAPI trigger
+
+Manual / POST /webhook/workflow-session-init-v1
+
+#### Webhook
+
+- **Local:** `POST http://localhost:5679/webhook/workflow-session-init-v1`
+- **Docker internal:** `POST http://n8n:5678/webhook/workflow-session-init-v1`
+
+#### Input payload
+
+```json
+{}
+```
+
+#### Output payload
+
+```json
+{
+  "sessionToken": "string",
+  "expiresAt": "iso8601"
+}
+```
+
+#### Steps
+
+_No steps (manual trigger only)._
+
+#### Failure handling
+
+Business workflows blocked until session initialized
+
+#### Tags
+
+`wf-11`
+
+---
+
+### `workflow-session-heartbeat-v1` — WF-12 · Workflow Session Heartbeat
+
+| Field | Value |
+|-------|-------|
+| **Serial** | WF-12 |
+| **Group** | `infra` |
+| **Owner** | platform-team |
+| **Version** | v1 |
+| **Trigger type** | `schedule` |
+| **Retries** | 0 |
+| **Repo path** | `n8n/workflows/infra/workflow-session-heartbeat-v1.json` |
+
+#### Summary
+
+Every 5 min — refresh session; re-trigger WF-11 if expired.
+
+#### Purpose
+
+Every 5 min — verify/refresh orchestrator session; re-run WF-11 if expired.
+
+#### FastAPI trigger
+
+n8n schedule only
+
+#### Schedule
+
+Cron: `*/5 * * * *`
+
+#### Input payload
+
+```json
+{}
+```
+
+#### Output payload
+
+```json
+{
+  "sessionValid": true,
+  "requiresInitialize": false
+}
+```
+
+#### Steps
+
+_No steps (manual trigger only)._
+
+#### Failure handling
+
+Triggers WF-11 Initialize via webhook
+
+#### Tags
+
+`wf-12`
+
+---
+
 ## Test
 
 ### `smoke-callback-v1` — WF-10 · Platform Smoke Callback
@@ -740,6 +987,66 @@ Fail CI gate
 #### Tags
 
 `wf-10`
+
+---
+
+### `test-slack-notification-v1` — WF-15 · Slack Notification Smoke Test
+
+| Field | Value |
+|-------|-------|
+| **Serial** | WF-15 |
+| **Group** | `test` |
+| **Owner** | platform-team |
+| **Version** | v1 |
+| **Trigger type** | `manual` |
+| **Retries** | 0 |
+| **Repo path** | `n8n/workflows/test/test-slack-notification-v1.json` |
+
+#### Summary
+
+Manual Slack smoke — switch test_mode in Pick Test Case node.
+
+#### Purpose
+
+Manual Slack smoke — test notification-slack-v1 from n8n editor with dummy payloads.
+
+#### FastAPI trigger
+
+Manual only — n8n editor Execute Workflow
+
+#### Trigger
+
+Manual — run from n8n UI or CI (`verify-n8n-callback`). Never activate for live webhooks.
+
+#### Input payload
+
+```json
+{
+  "test_mode": "basic_text | client_created | case_created | workflow_failed | stub_no_credentials | via_fastapi"
+}
+```
+
+#### Output payload
+
+```json
+{
+  "pass": true,
+  "test_mode": "string",
+  "actual": "accepted|stub|sent"
+}
+```
+
+#### Steps
+
+_No steps (manual trigger only)._
+
+#### Failure handling
+
+Inspect Report Result node — check SLACK_* env on n8n container
+
+#### Tags
+
+`wf-15`
 
 ---
 

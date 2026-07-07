@@ -3,7 +3,7 @@
 import type { ApiEnvelope, AuthTokens, UserProfile } from "@lexflow/shared";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { formatApiError } from "@/lib/api-errors";
+import { formatApiError, type ProblemBody } from "@/lib/api-errors";
 
 const TOKEN_KEY = "lexflow_access_token";
 const REFRESH_KEY = "lexflow_refresh_token";
@@ -43,12 +43,25 @@ export function getStoredAccessToken(): string | null {
 }
 
 async function parseEnvelope<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(formatApiError(body, res.statusText));
+  const text = await res.text();
+  let body: unknown = {};
+  if (text) {
+    try {
+      body = JSON.parse(text) as ApiEnvelope<T> | ProblemBody;
+    } catch {
+      body = {};
+    }
   }
-  const json = (await res.json()) as ApiEnvelope<T>;
-  return json.data;
+  if (!res.ok) {
+    const problem = body as ProblemBody;
+    const envelope = body as ApiEnvelope<T>;
+    const message = formatApiError(
+      problem.detail || problem.errors ? problem : envelope,
+      res.statusText || "Request failed",
+    );
+    throw new Error(message);
+  }
+  return (body as ApiEnvelope<T>).data;
 }
 
 export function newIdempotencyKey(): string {

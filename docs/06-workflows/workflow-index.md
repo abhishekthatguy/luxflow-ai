@@ -15,6 +15,11 @@ Webhook slugs (`document-upload-v1`) are stable API identifiers — do not chang
 | 8 | WF-08 · Daily Partner Report | `reports/` | `daily-partner-report-v1` | schedule | Daily 8am digest → pending cases, failed AI jobs, workflow errors to partners. |
 | 9 | WF-09 · Operations Health Monitor | `infra/` | `ops-health-monitor-v1` | schedule | Every 5 min → probe Redis, RabbitMQ, Celery, API; alert ops on failure. |
 | 10 | WF-10 · Platform Smoke Callback | `test/` | `smoke-callback-v1` | manual | Manual CI smoke → verify n8n can reach FastAPI internal health endpoint. |
+| 11 | WF-11 · Workflow Session Initialize | `infra/` | `workflow-session-init-v1` | webhook | Run once — create orchestrator session token in Redis (WF-11). |
+| 12 | WF-12 · Workflow Session Heartbeat | `infra/` | `workflow-session-heartbeat-v1` | schedule | Every 5 min — refresh session; re-trigger WF-11 if expired. |
+| 13 | WF-13 · Teams Notification Delivery | `notifications/` | `notification-teams-v1` | webhook | POST Adaptive Card payload to Microsoft Teams Incoming Webhook. |
+| 14 | WF-14 · Slack Notification Delivery | `notifications/` | `notification-slack-v1` | webhook | POST Block Kit payload to Slack via Bot API or Incoming Webhook. |
+| 15 | WF-15 · Slack Notification Smoke Test | `test/` | `test-slack-notification-v1` | manual | Manual Slack smoke — switch test_mode in Pick Test Case node. |
 
 ## Folder groups
 
@@ -24,7 +29,7 @@ Webhook slugs (`document-upload-v1`) are stable API identifiers — do not chang
 | `notifications/` | WF-07 | Time-based reminders and escalations for pending attorney approvals and SLA breaches. |
 | `reports/` | WF-08 | Scheduled operational digests for managing partners — pending work, failures, errors. |
 | `infra/` | WF-09 | Platform health monitoring — Redis, RabbitMQ, Celery, API. |
-| `test/` | WF-10 | CI and local smoke workflows. |
+| `test/` | WF-10, WF-15 | CI and local smoke workflows. |
 
 ## n8n UI tips
 

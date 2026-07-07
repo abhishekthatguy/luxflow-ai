@@ -1,4 +1,4 @@
-type ProblemBody = {
+export type ProblemBody = {
   detail?: string;
   title?: string;
   status?: number;

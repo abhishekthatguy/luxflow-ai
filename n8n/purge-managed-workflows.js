@@ -13,6 +13,7 @@ const CATALOG_PATH =
 const LEGACY_NAMES = new Set([
   "document-upload-notify-v1",
   "Demo: My first AI Agent in n8n",
+  "WF-Notification-Teams",
 ]);
 
 function loadManagedNames() {

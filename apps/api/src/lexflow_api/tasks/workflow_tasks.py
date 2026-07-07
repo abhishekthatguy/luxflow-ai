@@ -20,7 +20,7 @@ from lexflow_api.models.documents import Document
 from lexflow_api.models.shared import AsyncJob
 from lexflow_api.models.workflows import ExecutionStatus, WorkflowDefinition, WorkflowExecution
 from lexflow_api.services.timeline import write_timeline_event_sync
-from lexflow_api.services.workflow_dedup import document_upload_key
+from lexflow_api.services.workflow_dedup import client_created_key, document_upload_key
 
 logger = logging.getLogger(__name__)
 
@@ -194,6 +194,61 @@ def trigger_document_upload_workflow(document_id: str) -> dict[str, str]:
                 title="Workflow started",
                 payload={"executionId": str(execution.id), "slug": definition.slug},
             )
+        invoke_n8n_workflow.delay(str(execution.id), None)
+        return {"status": "queued", "executionId": str(execution.id)}
+    finally:
+        session.close()
+
+
+@celery_app.task(name="lexflow_api.tasks.workflow_tasks.trigger_client_created_workflow")  # type: ignore[untyped-decorator]
+def trigger_client_created_workflow(
+    client_id: str,
+    firm_id: str,
+    actor_id: str,
+) -> dict[str, str]:
+    """Queue WF-04 client-created-v1 when a portal user adds a client."""
+    client_uuid = UUID(client_id)
+    firm_uuid = UUID(firm_id)
+    session = SyncSessionLocal()
+    try:
+        definition = session.execute(
+            select(WorkflowDefinition).where(
+                WorkflowDefinition.is_active.is_(True),
+                WorkflowDefinition.slug == "client-created-v1",
+            )
+        ).scalar_one_or_none()
+        if definition is None:
+            return {"status": "skipped", "reason": "no workflow definition"}
+
+        dedup_key = client_created_key(client_uuid)
+        existing = session.execute(
+            select(WorkflowExecution).where(
+                WorkflowExecution.idempotency_key == dedup_key,
+                WorkflowExecution.status.in_(
+                    (ExecutionStatus.QUEUED, ExecutionStatus.RUNNING, ExecutionStatus.COMPLETED)
+                ),
+            )
+        ).scalar_one_or_none()
+        if existing is not None:
+            return {"status": "deduplicated", "executionId": str(existing.id)}
+
+        execution = WorkflowExecution(
+            workflow_definition_id=definition.id,
+            case_id=None,
+            firm_id=firm_uuid,
+            triggered_by=UUID(actor_id),
+            status=ExecutionStatus.QUEUED,
+            input_payload={
+                "eventType": "ClientCreated",
+                "clientId": client_id,
+                "firmId": firm_id,
+                "actorId": actor_id,
+            },
+            correlation_id=client_uuid,
+            idempotency_key=dedup_key,
+        )
+        session.add(execution)
+        session.commit()
         invoke_n8n_workflow.delay(str(execution.id), None)
         return {"status": "queued", "executionId": str(execution.id)}
     finally:

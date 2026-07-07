@@ -9,6 +9,7 @@ from lexflow_api.exceptions import ConflictError, NotFoundError
 from lexflow_api.models.cases import Case, Client, ClientType
 from lexflow_api.schemas.clients import ClientCreate, ClientResponse, ClientUpdate
 from lexflow_api.services.audit import write_audit_log
+from lexflow_api.services.outbox import write_outbox_event
 
 
 class ClientService:
@@ -79,7 +80,27 @@ class ClientService:
             action="client.created",
             resource_type="client",
             resource_id=client.id,
-            details={"name": client.name},
+            details={"name": client.name, "email": client.email},
+        )
+        await write_outbox_event(
+            self._session,
+            firm_id=user.firm_id,
+            aggregate_type="client",
+            aggregate_id=client.id,
+            event_type="ClientCreated",
+            payload={
+                "clientId": str(client.id),
+                "name": client.name,
+                "email": client.email,
+            },
+        )
+        await self._session.commit()
+        from lexflow_api.tasks.workflow_tasks import trigger_client_created_workflow
+
+        trigger_client_created_workflow.delay(
+            str(client.id),
+            str(user.firm_id),
+            str(user.id),
         )
         return self.to_response(client)
 

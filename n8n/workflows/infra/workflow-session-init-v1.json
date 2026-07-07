@@ -1,0 +1,135 @@
+{
+  "name": "WF-11 \u00b7 Workflow Session Initialize",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "workflow-session-init-v1",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "workflow-session-init-v1"
+    },
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/workflows/session/initialize",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}"
+      },
+      "id": "init-session",
+      "name": "Initialize Session",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.data ?? $json;\nconst staticData = $getWorkflowStaticData('global');\nstaticData.sessionToken = data.sessionToken || data.session_token || '';\nstaticData.expiresAt = data.expiresAt || data.expires_at || '';\n$setWorkflowStaticData('global', staticData);\nreturn [{ json: { ...data, stored: true, step: 'Store Session Token' } }];"
+      },
+      "id": "store-token",
+      "name": "Store Session Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Initialize Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Initialize Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Session": {
+      "main": [
+        [
+          {
+            "node": "Store Session Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-11"
+    }
+  ],
+  "meta": {
+    "purpose": "Create orchestrator session in Redis \u2014 run once on deploy or when heartbeat detects expiry.",
+    "domain_event": null,
+    "fastapi_trigger": "Manual / POST /webhook/workflow-session-init-v1",
+    "trigger": "Manual or webhook (also triggered by WF-12 on session expiry)",
+    "input": {},
+    "output": {
+      "sessionToken": "string",
+      "expiresAt": "iso8601"
+    },
+    "retries": 0,
+    "failure": "Business workflows blocked until session initialized",
+    "owner": "platform-team",
+    "version": 1,
+    "category": "infra",
+    "group": "infra",
+    "serial": 11,
+    "summary": "Run once \u2014 create orchestrator session token in Redis (WF-11)."
+  }
+}

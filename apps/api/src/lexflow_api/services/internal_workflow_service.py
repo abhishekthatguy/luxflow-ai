@@ -23,6 +23,7 @@ from lexflow_api.schemas.internal_workflows import (
     WorkflowStepPayload,
 )
 from lexflow_api.services.audit import write_audit_log
+from lexflow_api.services.client_onboarding_service import ClientOnboardingService
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,7 @@ class InternalWorkflowService:
             "aiEnabled": ocr_complete,
             "skipNotifications": False,
             "authorized": True,
+            "clientOnboarding": slug == "client-created-v1",
         }
 
         return WorkflowInitializeResponse(
@@ -185,6 +187,104 @@ class InternalWorkflowService:
             details={"reason": reason},
         )
         return WorkflowActionResult(success=True, message="Alert recorded.", data={"reason": reason})
+
+    async def action_step(
+        self,
+        slug: str,
+        execution_id: UUID,
+        step_name: str,
+        *,
+        step_order: int = 10,
+    ) -> WorkflowActionResult:
+        """Generic step runner — delegates known steps, records others."""
+        normalized = step_name.strip()
+        if normalized == "Get Case Details":
+            ctx = await self.case_context(execution_id)
+            return WorkflowActionResult(
+                success=True,
+                message="Case context loaded.",
+                data=ctx.model_dump(mode="json"),
+            )
+        if normalized == "Audit":
+            return await self.action_audit(slug, execution_id)
+        if "Notify" in normalized or normalized in {"Notify Teams", "Notify Attorney"}:
+            return await self.action_notify(slug, execution_id)
+        if normalized == "Trigger AI Summary":
+            return await self.action_ai_summary(slug, execution_id)
+
+        if slug == "client-created-v1":
+            onboarding = ClientOnboardingService(self._session)
+            execution = await self._get_execution(execution_id)
+            actor_raw = (execution.input_payload or {}).get("actorId")
+            actor_id = UUID(str(actor_raw)) if actor_raw else None
+
+            if normalized == "Welcome Email":
+                data = await onboarding.send_welcome_email(execution)
+                await self.record_step(
+                    slug,
+                    WorkflowStepPayload(
+                        execution_id=execution_id,
+                        step_name=normalized,
+                        step_order=step_order,
+                        status="completed",
+                        metadata=data,
+                    ),
+                )
+                return WorkflowActionResult(
+                    success=True,
+                    message="Welcome email queued for client.",
+                    data=data,
+                )
+            if normalized == "Assign Intake Team":
+                data = await onboarding.notify_intake_team(execution, actor_id=actor_id)
+                await self.record_step(
+                    slug,
+                    WorkflowStepPayload(
+                        execution_id=execution_id,
+                        step_name=normalized,
+                        step_order=step_order,
+                        status="completed",
+                        metadata=data,
+                    ),
+                )
+                return WorkflowActionResult(
+                    success=True,
+                    message="Intake team notifications queued.",
+                    data=data,
+                )
+            if normalized == "CRM Sync":
+                data = await onboarding.record_crm_sync(execution)
+                await self.record_step(
+                    slug,
+                    WorkflowStepPayload(
+                        execution_id=execution_id,
+                        step_name=normalized,
+                        step_order=step_order,
+                        status="completed",
+                        metadata=data,
+                    ),
+                )
+                return WorkflowActionResult(
+                    success=True,
+                    message="CRM sync acknowledged.",
+                    data=data,
+                )
+
+        await self.record_step(
+            slug,
+            WorkflowStepPayload(
+                execution_id=execution_id,
+                step_name=normalized,
+                step_order=step_order,
+                status="completed",
+                metadata={"slug": slug},
+            ),
+        )
+        return WorkflowActionResult(
+            success=True,
+            message=f"Step '{normalized}' recorded.",
+            data={"stepName": normalized, "stepOrder": step_order},
+        )
 
     async def record_step(self, slug: str, data: WorkflowStepPayload) -> None:
         execution = await self._get_execution(data.execution_id)

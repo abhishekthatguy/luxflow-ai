@@ -10,6 +10,7 @@ from lexflow_api.models.cases import (
     Task,
 )
 from lexflow_api.models.identity import Firm, RefreshToken, Role, User, UserRole
+from lexflow_api.models.password_reset import PasswordResetToken
 from lexflow_api.models.shared import OutboxEvent
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "Hearing",
     "Note",
     "OutboxEvent",
+    "PasswordResetToken",
     "RefreshToken",
     "Role",
     "Task",

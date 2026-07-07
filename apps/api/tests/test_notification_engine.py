@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from lexflow_api.domain.notification_events import NotificationEventType
 from lexflow_api.services.notifications.email_template_service import render_email, render_plain_summary
+from lexflow_api.services.notifications.slack_notification_service import build_slack_message
 from lexflow_api.services.notifications.teams_notification_service import build_teams_message_card
 
 
@@ -50,3 +51,25 @@ def test_plain_summary_fallback() -> None:
     text = render_plain_summary({"case_title": "Test Case", "status_badge": "Completed"})
     assert "Test Case" in text
     assert "Completed" in text
+
+
+def test_slack_message_has_blocks_and_actions() -> None:
+    cid = uuid4()
+    msg = build_slack_message(
+        event_type=NotificationEventType.CLIENT_CREATED,
+        title="New client: Gitlime",
+        description="Client onboarded — assign intake team.",
+        context={
+            "client_name": "Gitlime",
+            "client_email": "kashyapabhi688@gmail.com",
+            "client_url": "http://localhost:3000/clients/abc",
+            "workflow_slug": "client-created-v1",
+            "status_badge": "New Client",
+        },
+        correlation_id=cid,
+    )
+    assert "blocks" in msg
+    blocks = msg["blocks"]
+    assert any(b.get("type") == "actions" for b in blocks)
+    assert "Gitlime" in str(msg)
+

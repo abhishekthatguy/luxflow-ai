@@ -24,6 +24,30 @@ logger = logging.getLogger(__name__)
 _MAX_RETRIES = 4
 
 
+def _parse_n8n_delivery_status(
+    response: httpx.Response,
+    *,
+    configured: bool,
+) -> tuple[str, str | None]:
+    """Map n8n webhook JSON to delivery status (sent | stub | failed)."""
+    if response.status_code >= 400:
+        return "failed", response.text[:300]
+    try:
+        body = response.json()
+    except Exception:
+        return ("sent" if configured else "stub"), None
+    if not isinstance(body, dict):
+        return ("sent" if configured else "stub"), None
+    n8n_status = str(body.get("status") or "")
+    if n8n_status == "failed":
+        return "failed", str(body.get("error") or body.get("message") or "n8n delivery failed")[:300]
+    if n8n_status == "stub":
+        return "stub", str(body.get("message") or "channel not configured")[:300]
+    if n8n_status == "accepted":
+        return "sent", None
+    return ("sent" if configured else "stub"), None
+
+
 def _record_delivery(
     session,
     *,
@@ -92,6 +116,7 @@ async def _emit_async(payload: dict[str, Any]) -> dict[str, Any]:
             "inApp": result.in_app_count,
             "emailQueued": result.email_queued,
             "teamsQueued": result.teams_queued,
+            "slackQueued": result.slack_queued,
         }
 
 
@@ -184,16 +209,17 @@ def deliver_teams_notification(self, payload: dict[str, object]) -> dict[str, ob
     try:
         with httpx.Client(timeout=30.0) as client:
             response = client.post(n8n_url, json=body)
-            if response.status_code >= 400:
-                status = "failed"
-                error = response.text[:300]
-            else:
-                status = "sent" if webhook_url else "stub"
+            status, error = _parse_n8n_delivery_status(
+                response,
+                configured=bool(webhook_url),
+            )
     except Exception as exc:
         status = "failed"
         error = str(exc)[:300]
         if attempt < _MAX_RETRIES:
             raise
+    if status == "failed" and attempt < _MAX_RETRIES:
+        raise RuntimeError(error or "teams delivery failed")
 
     session = SyncSessionLocal()
     try:
@@ -213,6 +239,91 @@ def deliver_teams_notification(self, payload: dict[str, object]) -> dict[str, ob
             attempts=attempt,
         )
         session.commit()
+        return {"status": final_status, "error": error}
+    finally:
+        session.close()
+
+
+@celery_app.task(
+    bind=True,
+    name="lexflow_api.tasks.notification_tasks.deliver_slack_notification",
+    max_retries=3,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=120,
+)
+def deliver_slack_notification(self, payload: dict[str, object]) -> dict[str, object]:
+    firm_id = UUID(str(payload["firm_id"]))
+    correlation_id = UUID(str(payload["correlation_id"])) if payload.get("correlation_id") else None
+    message = dict(payload.get("message") or {})
+    attempt = self.request.retries + 1
+    started = time.perf_counter()
+
+    bot_token = settings.slack_bot_token.strip()
+    channel_id = settings.slack_team_channel_id.strip()
+    webhook_url = settings.slack_webhook_url.strip()
+    configured = settings.slack_configured
+    n8n_url = f"{settings.n8n_internal_url.rstrip('/')}/webhook/{settings.n8n_notification_slack_slug}"
+    body = {
+        "correlationId": str(correlation_id) if correlation_id else None,
+        "slackBotToken": bot_token or None,
+        "slackChannelId": channel_id or None,
+        "slackWebhookUrl": webhook_url or None,
+        "message": message,
+        "eventType": payload.get("event_type"),
+        "workflowSlug": payload.get("workflow_slug"),
+    }
+
+    status = "stub"
+    error: str | None = None
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(n8n_url, json=body)
+            status, error = _parse_n8n_delivery_status(
+                response,
+                configured=configured,
+            )
+    except Exception as exc:
+        status = "failed"
+        error = str(exc)[:300]
+        if attempt < _MAX_RETRIES:
+            raise
+    if status == "failed" and attempt < _MAX_RETRIES:
+        raise RuntimeError(error or "slack delivery failed")
+
+    session = SyncSessionLocal()
+    try:
+        final_status = "dlq" if status == "failed" else status
+        _record_delivery(
+            session,
+            firm_id=firm_id,
+            channel="slack",
+            provider="n8n_orchestration",
+            status=final_status,
+            correlation_id=correlation_id,
+            workflow_slug=str(payload.get("workflow_slug")) if payload.get("workflow_slug") else None,
+            workflow_execution_id=(
+                UUID(str(payload["workflow_execution_id"]))
+                if payload.get("workflow_execution_id")
+                else None
+            ),
+            latency_ms=int((time.perf_counter() - started) * 1000),
+            error_message=error,
+            payload={
+                "eventType": payload.get("event_type"),
+                "channelId": channel_id or None,
+                "hasBot": bool(bot_token and channel_id),
+                "hasWebhook": bool(webhook_url),
+            },
+            attempts=attempt,
+        )
+        session.commit()
+        logger.info(
+            "SLACK_NOTIFICATION status=%s channel=%s event=%s",
+            final_status,
+            channel_id or "webhook",
+            payload.get("event_type"),
+        )
         return {"status": final_status, "error": error}
     finally:
         session.close()

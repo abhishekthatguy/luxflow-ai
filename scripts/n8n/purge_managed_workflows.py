@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = ROOT / "n8n" / "workflows" / "catalog.json"
-LEGACY = {"document-upload-notify-v1", "Demo: My first AI Agent in n8n"}
+LEGACY = {"document-upload-notify-v1", "Demo: My first AI Agent in n8n", "WF-Notification-Teams"}
 
 
 def _volume_name() -> str:

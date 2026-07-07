@@ -1,29 +1,66 @@
 {
-  "name": "WF-Notification-Teams",
+  "name": "WF-13 \u00b7 Teams Notification Delivery",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "notification-teams-v1",
-        "responseMode": "onReceived",
+        "responseMode": "responseNode",
         "options": {}
       },
       "id": "webhook",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "webhookId": "notification-teams-v1"
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body ?? $json;\nconst url = body.teamsWebhookUrl;\nif (!url) {\n  return [{ json: { status: 'stub', message: 'TEAMS_WEBHOOK_URL not configured', correlationId: body.correlationId } }];\n}\nreturn [{ json: { ...body, postUrl: url } }];"
+        "jsCode": "const body = $json.body ?? $json;\nconst url = body.teamsWebhookUrl;\nreturn [{\n  json: {\n    ...body,\n    hasUrl: url ? 'yes' : 'no',\n    postUrl: url || '',\n    correlationId: body.correlationId,\n    message: url ? '' : 'TEAMS_WEBHOOK_URL not configured',\n  }\n}];"
       },
       "id": "resolve",
       "name": "Resolve Webhook URL",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 300]
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "if-url",
+              "leftValue": "={{ $json.hasUrl }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-url",
+      "name": "Decision: Has URL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -31,14 +68,16 @@
         "url": "={{ $json.postUrl }}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ $json.card }}",
-        "options": {}
+        "jsonBody": "={{ $json.card }}"
       },
       "id": "teams",
       "name": "Post to Teams",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [680, 300]
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
@@ -49,14 +88,108 @@
       "name": "Respond",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [900, 300]
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'stub', correlationId: $json.correlationId, message: $json.message } }}"
+      },
+      "id": "respond-stub",
+      "name": "Respond Stub",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        480
+      ]
     }
   ],
   "connections": {
-    "Webhook": { "main": [[{ "node": "Resolve Webhook URL", "type": "main", "index": 0 }]] },
-    "Resolve Webhook URL": { "main": [[{ "node": "Post to Teams", "type": "main", "index": 0 }]] },
-    "Post to Teams": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Resolve Webhook URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Webhook URL": {
+      "main": [
+        [
+          {
+            "node": "Decision: Has URL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision: Has URL?": {
+      "main": [
+        [
+          {
+            "node": "Post to Teams",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Teams": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "active": true
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-13"
+    }
+  ],
+  "meta": {
+    "purpose": "Deliver pre-built Adaptive Card to Microsoft Teams Incoming Webhook.",
+    "domain_event": "NotificationTeamsRequested",
+    "fastapi_trigger": "NotificationEngine Celery deliver_teams_notification",
+    "trigger": "POST /webhook/notification-teams-v1",
+    "input": {
+      "card": "object",
+      "teamsWebhookUrl": "string",
+      "correlationId": "string"
+    },
+    "output": {
+      "status": "accepted"
+    },
+    "retries": 3,
+    "failure": "Retry with backoff; DLQ after max attempts",
+    "owner": "platform-team",
+    "version": 1,
+    "category": "notifications",
+    "group": "notifications",
+    "serial": 13,
+    "summary": "POST Adaptive Card payload to Microsoft Teams Incoming Webhook."
+  }
 }

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}[LexFlow] New Client — {{ client_name|default('Client') }}{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 8px;font-size:20px;color:#0f172a;">New Client Onboarded</h1>
+<p style="margin:0 0 24px;font-size:14px;color:#475569;">A new client was added on the portal. Intake workflow WF-04 has started.</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:24px;">
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;width:140px;">Client</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;font-weight:600;">{{ client_name|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Email</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ client_email|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Type</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ client_type|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;font-size:13px;color:#64748b;">Workflow</td><td style="padding:8px 0;font-size:14px;color:#0f172a;">{{ workflow_slug|default('client-created-v1') }}</td></tr>
+</table>
+{% if client_url %}
+<a href="{{ client_url }}" style="display:inline-block;padding:12px 24px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;">View Client</a>
+{% endif %}
+{% endblock %}

@@ -205,6 +205,7 @@ class CaseService:
             description=f"Case {case.case_number}: {case.title} has been opened.",
             status_badge="Created",
             actor_id=user.id,
+            include_admin_emails=True,
             context={
                 "current_stage": "Intake",
                 "recent_activity": ["Case created", "Intake workflow queued"],

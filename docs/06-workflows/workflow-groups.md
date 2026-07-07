@@ -11,10 +11,10 @@ Workflows are grouped into five folders under `n8n/workflows/`. Each group has a
 | Group | Folder | Workflows | Activation |
 |-------|--------|-----------|------------|
 | **Business** | `business/` | 6 | Yes — webhook workflows active in all environments |
-| **Notifications** | `notifications/` | 1 | Yes — scheduled hourly |
+| **Notifications** | `notifications/` | 3 | Yes — scheduled hourly |
 | **Reports** | `reports/` | 1 | Yes — scheduled daily |
-| **Infrastructure** | `infra/` | 1 | Yes — scheduled every 5 minutes |
-| **Test** | `test/` | 1 | Manual only — do not enable for scheduled/webhook production traffic |
+| **Infrastructure** | `infra/` | 3 | Yes — scheduled every 5 minutes |
+| **Test** | `test/` | 2 | Manual only — do not enable for scheduled/webhook production traffic |
 
 ---
 
@@ -53,10 +53,14 @@ Time-based reminders and escalations for pending attorney approvals and SLA brea
 | Workflow | Slug | Trigger |
 |----------|------|---------|
 | Approval Escalation | `approval-escalation-v1` | schedule `0 * * * *` |
+| Teams Notification Delivery | `notification-teams-v1` | webhook |
+| Slack Notification Delivery | `notification-slack-v1` | webhook |
 
 ### What each workflow does
 
 - **`approval-escalation-v1`** — Hourly SLA check — approvals pending >24h get reminder, then partner escalation.
+- **`notification-teams-v1`** — Deliver pre-built Adaptive Card to Microsoft Teams Incoming Webhook.
+- **`notification-slack-v1`** — Deliver pre-built Block Kit message to Slack team channel.
 
 ---
 
@@ -85,26 +89,32 @@ Platform health monitoring — Redis, RabbitMQ, Celery, API. Creates incidents a
 | Workflow | Slug | Trigger |
 |----------|------|---------|
 | Operations Health Monitor | `ops-health-monitor-v1` | schedule `*/5 * * * *` |
+| Workflow Session Initialize | `workflow-session-init-v1` | webhook |
+| Workflow Session Heartbeat | `workflow-session-heartbeat-v1` | schedule `*/5 * * * *` |
 
 ### What each workflow does
 
 - **`ops-health-monitor-v1`** — Every 5 min — probe Redis, RabbitMQ, Celery, API; create incident + alert admins.
+- **`workflow-session-init-v1`** — Create orchestrator session in Redis — run once on deploy or when heartbeat detects expiry.
+- **`workflow-session-heartbeat-v1`** — Every 5 min — verify/refresh orchestrator session; re-run WF-11 if expired.
 
 ---
 
 ## Test (`test/`)
 
-CI and local smoke workflows. Manual trigger only — never wired to production traffic.
+CI and local smoke workflows. Manual trigger only — never wired to production traffic. Includes Slack notification editor tests (WF-15).
 
 **Activation:** Manual only — do not enable for scheduled/webhook production traffic
 
 | Workflow | Slug | Trigger |
 |----------|------|---------|
 | Platform Smoke Callback | `smoke-callback-v1` | manual |
+| Slack Notification Smoke Test | `test-slack-notification-v1` | manual |
 
 ### What each workflow does
 
 - **`smoke-callback-v1`** — CI/local smoke — verifies n8n can reach FastAPI internal smoke endpoint.
+- **`test-slack-notification-v1`** — Manual Slack smoke — test notification-slack-v1 from n8n editor with dummy payloads.
 
 ---
 

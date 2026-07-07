@@ -13,17 +13,31 @@ const STATUS_STYLES: Record<PipelineStageStatus, string> = {
   skipped: "border-slate-100 bg-slate-50 text-slate-300 line-through",
 };
 
+const ACTIVE_LABELS: Record<string, string> = {
+  uploaded: "in progress…",
+  virus_scan: "in progress…",
+  ocr: "in progress…",
+  ai_summary: "in progress…",
+  human_approval: "awaiting review",
+  workflow_triggered: "in progress…",
+  completed: "in progress…",
+};
+
 export function PipelineSteps({
   stages,
   title = "AI Processing Timeline",
   compact = false,
   currentStage,
+  emptyMessage,
 }: {
   stages: PipelineStage[];
   title?: string;
   compact?: boolean;
   currentStage?: string | null;
+  emptyMessage?: string;
 }) {
+  const isIdle = stages.length > 0 && stages.every((s) => s.status === "pending");
+
   const normalized = currentStage
     ? stages.map((stage) =>
         stage.status === "active" && stage.id !== currentStage
@@ -37,6 +51,9 @@ export function PipelineSteps({
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="processing-pipeline">
       {!compact && <h3 className="text-sm font-semibold text-slate-800">{title}</h3>}
+      {isIdle && emptyMessage && (
+        <p className="mt-3 text-sm text-slate-500">{emptyMessage}</p>
+      )}
       <ol className={`${compact ? "mt-0" : "mt-4"} space-y-0`}>
         {normalized.map((stage, index) => (
           <li key={stage.id} className="flex flex-col items-center">
@@ -46,7 +63,9 @@ export function PipelineSteps({
             >
               {stage.label}
               {stage.status === "active" && (
-                <span className="ml-2 text-xs font-normal text-blue-600">in progress…</span>
+                <span className="ml-2 text-xs font-normal text-blue-600">
+                  {ACTIVE_LABELS[stage.id] ?? "in progress…"}
+                </span>
               )}
             </div>
             {index < normalized.length - 1 && (

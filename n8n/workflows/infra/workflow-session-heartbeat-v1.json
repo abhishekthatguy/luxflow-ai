@@ -1,0 +1,252 @@
+{
+  "name": "WF-12 \u00b7 Workflow Session Heartbeat",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nreturn [{ json: { sessionToken: staticData.sessionToken || '', expiresAt: staticData.expiresAt || '' } }];"
+      },
+      "id": "load-token",
+      "name": "Load Session Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://api:8000/internal/workflows/session/heartbeat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            },
+            {
+              "name": "X-Session-Token",
+              "value": "={{ $getWorkflowStaticData('global').sessionToken || '' }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "heartbeat",
+      "name": "Session Heartbeat API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const hb = $json.data ?? $json;\nreturn [{\n  json: {\n    sessionValid: Boolean(hb.sessionValid),\n    requiresInitialize: Boolean(hb.requiresInitialize),\n    sessionToken: hb.sessionToken || hb.session_token || $('Load Session Token').first().json.sessionToken,\n    message: hb.message || '',\n  }\n}];"
+      },
+      "id": "merge-hb",
+      "name": "Merge Heartbeat Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "if-valid",
+              "leftValue": "={{ $json.sessionValid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-valid",
+      "name": "Decision: Session Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://n8n:5678/webhook/workflow-session-init-v1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}"
+      },
+      "id": "reinit",
+      "name": "Trigger Initialize Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $json.data ?? $json;\nconst staticData = $getWorkflowStaticData('global');\nstaticData.sessionToken = data.sessionToken || data.session_token || '';\nstaticData.expiresAt = data.expiresAt || data.expires_at || '';\n$setWorkflowStaticData('global', staticData);\nreturn [{ json: { ...data, stored: true, step: 'Store Session Token' } }];"
+      },
+      "id": "store-token",
+      "name": "Store Session Token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Load Session Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Session Token": {
+      "main": [
+        [
+          {
+            "node": "Session Heartbeat API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Session Heartbeat API": {
+      "main": [
+        [
+          {
+            "node": "Merge Heartbeat Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Heartbeat Result": {
+      "main": [
+        [
+          {
+            "node": "Decision: Session Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision: Session Valid?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Trigger Initialize Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Initialize Workflow": {
+      "main": [
+        [
+          {
+            "node": "Store Session Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-12"
+    }
+  ],
+  "meta": {
+    "purpose": "Every 5 min \u2014 verify/refresh orchestrator session; re-run WF-11 if expired.",
+    "domain_event": null,
+    "fastapi_trigger": "n8n schedule only",
+    "trigger": "Cron every 5 minutes",
+    "input": {},
+    "output": {
+      "sessionValid": true,
+      "requiresInitialize": false
+    },
+    "retries": 0,
+    "failure": "Triggers WF-11 Initialize via webhook",
+    "owner": "platform-team",
+    "version": 1,
+    "category": "infra",
+    "group": "infra",
+    "serial": 12,
+    "summary": "Every 5 min \u2014 refresh session; re-trigger WF-11 if expired."
+  }
+}

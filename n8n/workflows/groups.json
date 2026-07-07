@@ -34,8 +34,8 @@
   "test": {
     "label": "Test",
     "folder": "test",
-    "serial_range": "WF-10",
-    "description": "CI and local smoke workflows. Manual trigger only \u2014 never wired to production traffic.",
+    "serial_range": "WF-10, WF-15",
+    "description": "CI and local smoke workflows. Manual trigger only \u2014 never wired to production traffic. Includes Slack notification editor tests (WF-15).",
     "activate": "Manual only \u2014 do not enable for scheduled/webhook production traffic",
     "n8n_tag": "test"
   }

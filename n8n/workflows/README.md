@@ -27,6 +27,10 @@ Time-based reminders and escalations for pending attorney approvals and SLA brea
 
 - **WF-07 · Approval Escalation** — `approval-escalation-v1.json` (webhook/schedule)
   - Hourly SLA check → remind attorney; escalate to partner after 24h.
+- **WF-13 · Teams Notification Delivery** — `notification-teams-v1.json` (webhook/schedule)
+  - POST Adaptive Card payload to Microsoft Teams Incoming Webhook.
+- **WF-14 · Slack Notification Delivery** — `notification-slack-v1.json` (webhook/schedule)
+  - POST Block Kit payload to Slack via Bot API or Incoming Webhook.
 
 ### `reports/` — Reports
 
@@ -41,13 +45,19 @@ Platform health monitoring — Redis, RabbitMQ, Celery, API. Creates incidents a
 
 - **WF-09 · Operations Health Monitor** — `ops-health-monitor-v1.json` (webhook/schedule)
   - Every 5 min → probe Redis, RabbitMQ, Celery, API; alert ops on failure.
+- **WF-11 · Workflow Session Initialize** — `workflow-session-init-v1.json` (webhook/schedule)
+  - Run once — create orchestrator session token in Redis (WF-11).
+- **WF-12 · Workflow Session Heartbeat** — `workflow-session-heartbeat-v1.json` (webhook/schedule)
+  - Every 5 min — refresh session; re-trigger WF-11 if expired.
 
 ### `test/` — Test
 
-CI and local smoke workflows. Manual trigger only — never wired to production traffic.
+CI and local smoke workflows. Manual trigger only — never wired to production traffic. Includes Slack notification editor tests (WF-15).
 
 - **WF-10 · Platform Smoke Callback** — `smoke-callback-v1.json` (manual)
   - Manual CI smoke → verify n8n can reach FastAPI internal health endpoint.
+- **WF-15 · Slack Notification Smoke Test** — `test-slack-notification-v1.json` (manual)
+  - Manual Slack smoke — switch test_mode in Pick Test Case node.
 
 ## Commands
 

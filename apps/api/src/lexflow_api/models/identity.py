@@ -96,6 +96,9 @@ class User(Base):
         secondary="identity.user_roles", back_populates="users"
     )
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user")
+    password_reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(
+        back_populates="user"
+    )
 
 
 class UserRole(Base):

@@ -66,8 +66,7 @@ WORKFLOW_ACCESS: dict[str, WorkflowAccess] = {
         automated_by="Auto after document OCR completes (Celery → n8n)",
         automation_steps=(
             "Validate signature",
-            "Initialize workflow",
-            "Heartbeat API",
+            "Verify session token",
             "Get case details",
             "Poll OCR status",
             "Decision: OCR complete?",
@@ -182,6 +181,56 @@ WORKFLOW_ACCESS: dict[str, WorkflowAccess] = {
         manual_trigger=True,
         automated_by="Manual only — CI / platform smoke tests",
         automation_steps=("Verify n8n → FastAPI callback path",),
+    ),
+    "workflow-session-init-v1": WorkflowAccess(
+        serial=11,
+        allowed_roles=frozenset({ROLE_SYSTEM_ADMINISTRATOR}),
+        scope="firm",
+        manual_trigger=True,
+        automated_by="Manual on deploy; also triggered by WF-12 when session expires",
+        automation_steps=(
+            "POST /internal/workflows/session/initialize",
+            "Store session token in n8n static data",
+        ),
+    ),
+    "workflow-session-heartbeat-v1": WorkflowAccess(
+        serial=12,
+        allowed_roles=frozenset({ROLE_SYSTEM_ADMINISTRATOR, ROLE_MANAGING_PARTNER}),
+        scope="firm",
+        manual_trigger=False,
+        test_trigger_roles=frozenset({ROLE_SYSTEM_ADMINISTRATOR}),
+        automated_by="Scheduled — every 5 minutes (n8n cron)",
+        automation_steps=(
+            "Load session token",
+            "GET /internal/workflows/session/heartbeat",
+            "Re-trigger WF-11 if session expired",
+        ),
+    ),
+    "notification-teams-v1": WorkflowAccess(
+        serial=13,
+        allowed_roles=frozenset({ROLE_SYSTEM_ADMINISTRATOR}),
+        scope="firm",
+        manual_trigger=False,
+        test_trigger_roles=frozenset({ROLE_SYSTEM_ADMINISTRATOR}),
+        automated_by="Celery deliver_teams_notification → n8n webhook",
+        automation_steps=(
+            "Resolve Teams webhook URL",
+            "POST Adaptive Card",
+            "Respond accepted",
+        ),
+    ),
+    "notification-slack-v1": WorkflowAccess(
+        serial=14,
+        allowed_roles=frozenset({ROLE_SYSTEM_ADMINISTRATOR}),
+        scope="firm",
+        manual_trigger=False,
+        test_trigger_roles=frozenset({ROLE_SYSTEM_ADMINISTRATOR}),
+        automated_by="Celery deliver_slack_notification → n8n webhook",
+        automation_steps=(
+            "Resolve Slack bot token or webhook URL",
+            "POST Block Kit message",
+            "Respond accepted",
+        ),
     ),
 }
 

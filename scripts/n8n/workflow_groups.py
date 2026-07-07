@@ -50,9 +50,10 @@ GROUPS: dict[str, dict[str, str]] = {
     "test": {
         "label": "Test",
         "folder": "test",
-        "serial_range": "WF-10",
+        "serial_range": "WF-10, WF-15",
         "description": (
-            "CI and local smoke workflows. Manual trigger only — never wired to production traffic."
+            "CI and local smoke workflows. Manual trigger only — never wired to production traffic. "
+            "Includes Slack notification editor tests (WF-15)."
         ),
         "activate": "Manual only — do not enable for scheduled/webhook production traffic",
         "n8n_tag": "test",

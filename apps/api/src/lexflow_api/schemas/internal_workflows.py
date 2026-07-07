@@ -52,3 +52,13 @@ class WorkflowStepPayload(CamelModel):
     status: str = "completed"
     metadata: dict[str, object] = {}
     error_message: str | None = None
+
+
+class WorkflowSessionResponse(CamelModel):
+    session_token: str | None = None
+    session_valid: bool
+    authorized: bool = False
+    requires_initialize: bool = False
+    expires_at: str | None = None
+    refreshed_at: str | None = None
+    message: str | None = None

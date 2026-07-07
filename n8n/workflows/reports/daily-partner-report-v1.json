@@ -23,74 +23,27 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Pending Cases', ok: true } }];"
-      },
-      "id": "pending",
-      "name": "Pending Cases",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        680,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Failed AI Jobs', ok: true } }];"
-      },
-      "id": "ai",
-      "name": "Failed AI Jobs",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        900,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Workflow Errors', ok: true } }];"
-      },
-      "id": "wf",
-      "name": "Workflow Errors",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        300
-      ]
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "http://api:8000/internal/notifications/admin",
+        "url": "http://api:8000/internal/workflows/scheduled/daily-partner-report-v1/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"subject\": \"[LexFlow] WF-08 \\u00b7 Daily Partner Report \\u2014 Email Partner\", \"body\": \"Workflow step completed: Email Partner\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-08 \\u00b7 Daily Partner Report\", \"step\": \"Email Partner\", \"executionId\": \"{{ $execution.id }}\"}}"
+        "jsonBody": "{}"
       },
-      "id": "email",
-      "name": "Email Partner",
+      "id": "run-job",
+      "name": "Run Scheduled Job",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1340,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://api:8000/internal/notifications/admin",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"subject\": \"[LexFlow] WF-08 \\u00b7 Daily Partner Report \\u2014 Teams Notification\", \"body\": \"Workflow step completed: Teams Notification\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-08 \\u00b7 Daily Partner Report\", \"step\": \"Teams Notification\", \"executionId\": \"{{ $execution.id }}\"}}"
-      },
-      "id": "teams",
-      "name": "Teams Notification",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1560,
+        460,
         300
       ]
     }
@@ -100,51 +53,7 @@
       "main": [
         [
           {
-            "node": "Pending Cases",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Pending Cases": {
-      "main": [
-        [
-          {
-            "node": "Failed AI Jobs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Failed AI Jobs": {
-      "main": [
-        [
-          {
-            "node": "Workflow Errors",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Workflow Errors": {
-      "main": [
-        [
-          {
-            "node": "Email Partner",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Email Partner": {
-      "main": [
-        [
-          {
-            "node": "Teams Notification",
+            "node": "Run Scheduled Job",
             "type": "main",
             "index": 0
           }

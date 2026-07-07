@@ -3,10 +3,29 @@ from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, text
+from sqlalchemy.dialects.postgresql import ENUM as PG_ENUM
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from lexflow_api.db.base import Base
+
+notification_channel_enum = PG_ENUM(
+    "in_app",
+    "email",
+    "teams",
+    name="notification_channel",
+    schema="shared",
+    create_type=False,
+)
+notification_status_enum = PG_ENUM(
+    "pending",
+    "sent",
+    "read",
+    "failed",
+    name="notification_status",
+    schema="shared",
+    create_type=False,
+)
 
 
 class NotificationChannel(StrEnum):
@@ -35,11 +54,11 @@ class Notification(Base):
     user_id: Mapped[UUID] = mapped_column(ForeignKey("identity.users.id"), nullable=False)
     case_id: Mapped[UUID | None] = mapped_column(ForeignKey("cases.cases.id"))
     firm_id: Mapped[UUID] = mapped_column(ForeignKey("identity.firms.id"), nullable=False)
-    channel: Mapped[str] = mapped_column(String(50), nullable=False)
+    channel: Mapped[str] = mapped_column(notification_channel_enum, nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(50), nullable=False, server_default="pending")
+    status: Mapped[str] = mapped_column(notification_status_enum, nullable=False, server_default="pending")
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

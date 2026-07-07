@@ -225,15 +225,6 @@ class AIService:
             actor_id=user.id,
             payload={"summaryId": str(summary.id), "caseNumber": case.case_number},
         )
-        await write_timeline_event(
-            self._session,
-            case_id=summary.case_id,
-            firm_id=user.firm_id,
-            event_type="notification.sent",
-            title="Team notification sent",
-            actor_id=user.id,
-            payload={"summaryId": str(summary.id), "channel": "in_app"},
-        )
         await write_audit_log(
             self._session,
             firm_id=user.firm_id,
@@ -243,8 +234,32 @@ class AIService:
             resource_id=summary.id,
             details={"caseId": str(summary.case_id), "caseNumber": case.case_number},
         )
-        await self._notify_summary_approved(summary, case, approver_id=user.id)
-        return self.to_response(summary)
+        dispatch = await self._notify_summary_approved(summary, case, approver_id=user.id)
+        await write_timeline_event(
+            self._session,
+            case_id=summary.case_id,
+            firm_id=user.firm_id,
+            event_type="notification.sent",
+            title="Team notifications queued",
+            actor_id=user.id,
+            payload={
+                "summaryId": str(summary.id),
+                "emailQueued": dispatch["emailQueued"],
+                "slackQueued": dispatch["slackQueued"],
+                "teamsQueued": dispatch["teamsQueued"],
+            },
+        )
+        from lexflow_api.schemas.ai import NotificationDispatchSummary
+
+        response = self.to_response(summary)
+        response.notification_dispatch = NotificationDispatchSummary(
+            email_queued=dispatch["emailQueued"],
+            slack_queued=dispatch["slackQueued"],
+            teams_queued=dispatch["teamsQueued"],
+            in_app_count=dispatch["inAppCount"],
+            correlation_id=dispatch.get("correlationId"),
+        )
+        return response
 
     async def reject_summary(
         self, user: CurrentUser, summary_id: UUID, data: SummaryRejectRequest
@@ -269,11 +284,11 @@ class AIService:
 
     async def _notify_summary_approved(
         self, summary: AISummary, case: Case, *, approver_id: UUID
-    ) -> None:
+    ) -> dict[str, int | str | None]:
         from lexflow_api.domain.notification_events import NotificationEventType
         from lexflow_api.services.notifications.helpers import emit_case_notification
 
-        await emit_case_notification(
+        result = await emit_case_notification(
             self._session,
             event_type=NotificationEventType.AI_SUMMARY_APPROVED,
             firm_id=summary.firm_id,
@@ -282,12 +297,20 @@ class AIService:
             description=f"Case {case.case_number}: attorney-approved summary is ready for the team.",
             status_badge="Approved",
             actor_id=approver_id,
+            include_admin_emails=True,
             context={
                 "current_stage": "Approved",
                 "workflow_name": "AI Summary Approved",
                 "recent_activity": ["AI summary approved by attorney"],
             },
         )
+        return {
+            "correlationId": str(result.correlation_id),
+            "inAppCount": result.in_app_count,
+            "emailQueued": result.email_queued,
+            "teamsQueued": result.teams_queued,
+            "slackQueued": result.slack_queued,
+        }
 
     async def _get_active_template(self, slug: str) -> PromptTemplate:
         result = await self._session.execute(

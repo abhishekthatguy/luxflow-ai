@@ -31,13 +31,28 @@ const SUMMARY_STATUS_STYLES: Record<string, string> = {
   rejected: "bg-red-100 text-red-900",
 };
 
-async function pollJob(statusUrl: string, maxAttempts = 45): Promise<JobStatus> {
+async function pollJob(statusUrl: string, maxAttempts = 120): Promise<JobStatus | null> {
   for (let i = 0; i < maxAttempts; i += 1) {
     const job = await apiFetch<JobStatus>(statusUrl);
     if (job.status === "completed" || job.status === "failed") return job;
     await new Promise((r) => setTimeout(r, 2000));
   }
-  throw new Error("Summary generation timed out — check worker logs.");
+  return null;
+}
+
+function formatDispatchMessage(dispatch?: AISummary["notificationDispatch"]): string {
+  if (!dispatch) {
+    return "Approved — notifications queued for the team.";
+  }
+  const parts: string[] = [];
+  if ((dispatch.emailQueued ?? 0) > 0) parts.push(`${dispatch.emailQueued} email(s)`);
+  if ((dispatch.slackQueued ?? 0) > 0) parts.push("Slack");
+  if ((dispatch.teamsQueued ?? 0) > 0) parts.push("Teams");
+  if ((dispatch.inAppCount ?? 0) > 0) parts.push(`${dispatch.inAppCount} in-app alert(s)`);
+  if (parts.length === 0) {
+    return "Approved — no notification channels were configured.";
+  }
+  return `Approved — queued: ${parts.join(", ")}.`;
 }
 
 export default function CaseAIPage() {
@@ -54,6 +69,8 @@ export default function CaseAIPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [pendingJob, setPendingJob] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
 
   const ocrReady = useMemo(() => {
     if (documents.length === 0) return false;
@@ -79,10 +96,20 @@ export default function CaseAIPage() {
 
   useEffect(() => {
     load();
-    const interval = hasGenerating || !ocrReady ? 3000 : 10000;
+    const interval = hasGenerating || pendingJob || !ocrReady ? 3000 : 10000;
     const timer = setInterval(load, interval);
     return () => clearInterval(timer);
-  }, [load, hasGenerating, ocrReady]);
+  }, [load, hasGenerating, pendingJob, ocrReady]);
+
+  useEffect(() => {
+    if (!pendingJob) return;
+    const draft = summaries.find((s) => s.status === "draft" || s.status === "generating");
+    if (draft?.status === "draft") {
+      setPendingJob(false);
+      setInfo(null);
+      setError(null);
+    }
+  }, [summaries, pendingJob]);
 
   async function requestSummary() {
     if (!caseId) return;
@@ -92,20 +119,33 @@ export default function CaseAIPage() {
     }
     setLoading(true);
     setError(null);
+    setInfo(null);
     try {
       const accepted = await apiFetch<JobAccepted>(`/api/v1/cases/${caseId}/ai/summarize`, {
         method: "POST",
         body: JSON.stringify({ summaryType: "case_overview" }),
       });
+      setPendingJob(true);
+      load();
       const job = await pollJob(accepted.statusUrl);
-      if (job.status === "failed") {
+      if (job?.status === "failed") {
         throw new Error(
           typeof job.result?.error === "string" ? job.result.error : "Summary generation failed"
         );
       }
+      if (job?.status === "completed") {
+        setPendingJob(false);
+        load();
+        return;
+      }
+      setInfo(
+        "Summary is still generating in the background. This page will refresh automatically when the draft is ready."
+      );
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Summary request failed");
+      setPendingJob(false);
+      load();
     } finally {
       setLoading(false);
     }
@@ -141,9 +181,16 @@ export default function CaseAIPage() {
 
   async function approve(summaryId: string) {
     setError(null);
+    setInfo(null);
     try {
-      await apiFetch(`/api/v1/ai/summaries/${summaryId}/approve`, { method: "POST" });
+      const updated = await apiFetch<AISummary>(`/api/v1/ai/summaries/${summaryId}/approve`, {
+        method: "POST",
+      });
       setEditingId(null);
+      setSummaries((prev) =>
+        prev.map((s) => (s.id === summaryId ? { ...s, ...updated, status: "approved" } : s))
+      );
+      setInfo(formatDispatchMessage(updated.notificationDispatch));
       load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Approval failed");
@@ -207,15 +254,23 @@ export default function CaseAIPage() {
             <button
               type="button"
               onClick={requestSummary}
-              disabled={loading || !ocrReady || documents.length === 0}
+              disabled={loading || pendingJob || hasGenerating || !ocrReady || documents.length === 0}
               className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
               data-testid="request-case-summary"
             >
-              {loading ? "Generating…" : "Generate case summary from documents"}
+              {loading || pendingJob || hasGenerating
+                ? "Generating…"
+                : "Generate case summary from documents"}
             </button>
           ) : (
             <p className="text-sm text-slate-500">
               AI summary requests require Attorney, Associate, Partner, or Managing Partner role.
+            </p>
+          )}
+
+          {info && (
+            <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
+              {info}
             </p>
           )}
 
@@ -321,7 +376,7 @@ export default function CaseAIPage() {
 
                 {s.status === "approved" && (
                   <p className="mt-3 text-xs font-medium text-green-700">
-                    Approved — team notified and audit log updated.
+                    {formatDispatchMessage(s.notificationDispatch)}
                   </p>
                 )}
               </li>
@@ -338,6 +393,7 @@ export default function CaseAIPage() {
             stages={pipelineStages}
             currentStage={currentStage}
             title="Processing timeline"
+            emptyMessage="Upload documents on the Documents tab to start the pipeline."
           />
         </div>
       </div>

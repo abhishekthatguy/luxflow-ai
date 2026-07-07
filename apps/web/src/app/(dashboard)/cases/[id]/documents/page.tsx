@@ -1,8 +1,9 @@
 "use client";
 
 import type { DocumentSummary } from "@lexflow/shared";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CaseNav } from "@/components/case-nav";
 import { DocumentPreviewModal } from "@/components/document-preview-panel";
@@ -34,6 +35,8 @@ export default function CaseDocumentsPage() {
   const [previewDoc, setPreviewDoc] = useState<DocumentSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [ocrReadyHint, setOcrReadyHint] = useState(false);
+  const prevOcrReady = useRef(false);
 
   const ocrSummary = useMemo(() => {
     const failed = documents.filter((d) => d.ocrStatus === "failed" || d.status === "failed");
@@ -45,6 +48,10 @@ export default function CaseDocumentsPage() {
     );
     return { failed, pending, ready };
   }, [documents]);
+
+  const allOcrReady =
+    documents.length > 0 &&
+    documents.every((d) => d.ocrStatus === "completed" || d.ocrStatus === "skipped");
 
   const load = useCallback(() => {
     if (!caseId) return;
@@ -59,6 +66,13 @@ export default function CaseDocumentsPage() {
     return () => clearInterval(timer);
   }, [load]);
 
+  useEffect(() => {
+    if (allOcrReady && !prevOcrReady.current && documents.length > 0) {
+      setOcrReadyHint(true);
+    }
+    prevOcrReady.current = allOcrReady;
+  }, [allOcrReady, documents.length]);
+
   async function onUpload(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -69,6 +83,7 @@ export default function CaseDocumentsPage() {
     setUploading(true);
     setError(null);
     setMessage(null);
+    setOcrReadyHint(false);
 
     try {
       const buffer = await file.arrayBuffer();
@@ -101,7 +116,7 @@ export default function CaseDocumentsPage() {
         body: JSON.stringify({ checksumSha256: checksum }),
       });
 
-      setMessage(`${file.name} uploaded — OCR started.`);
+      setMessage(`${file.name} uploaded successfully. OCR is running in the background.`);
       fileInput.value = "";
       load();
       reloadPipeline();
@@ -193,10 +208,30 @@ export default function CaseDocumentsPage() {
       </form>
 
       {message && (
-        <p className="mt-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-          {message}
-        </p>
+        <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+          <p>{message}</p>
+          {caseId && (
+            <p className="mt-2 text-green-900">
+              When OCR finishes, you can optionally{" "}
+              <Link href={`/cases/${caseId}/ai`} className="font-medium underline hover:text-green-950">
+                open the AI tab
+              </Link>{" "}
+              to generate a case summary.
+            </p>
+          )}
+        </div>
       )}
+
+      {ocrReadyHint && caseId && (
+        <div className="mt-4 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+          All documents are OCR-ready.{" "}
+          <Link href={`/cases/${caseId}/ai`} className="font-medium underline hover:text-blue-950">
+            Go to AI tab →
+          </Link>{" "}
+          to generate and approve a summary (optional).
+        </div>
+      )}
+
       {error && (
         <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {error}
@@ -262,6 +297,7 @@ export default function CaseDocumentsPage() {
           stages={pipelineStages}
           currentStage={currentStage}
           title="Processing timeline"
+          emptyMessage="Upload a document to begin virus scan, OCR, and AI summarization."
         />
       </div>
 

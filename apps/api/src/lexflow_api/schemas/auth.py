@@ -32,3 +32,16 @@ class UserResponse(CamelModel):
     roles: list[str]
     permissions: list[str]
     last_login_at: datetime | None = None
+
+
+class PasswordResetRequest(CamelModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(CamelModel):
+    token: str = Field(min_length=20, max_length=512)
+    password: str = Field(min_length=8, max_length=128)
+
+
+class PasswordResetMessage(CamelModel):
+    message: str

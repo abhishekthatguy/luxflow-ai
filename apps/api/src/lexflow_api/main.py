@@ -78,6 +78,27 @@ def register_exception_handlers(app: FastAPI) -> None:
             media_type="application/problem+json",
         )
 
+    @app.exception_handler(Exception)
+    async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        import logging
+
+        logging.getLogger("lexflow.api").exception("unhandled_error path=%s", request.url.path)
+        problem = ProblemDetail(
+            type="https://lexflow.ai/errors/internal-error",
+            title="Internal Server Error",
+            status=500,
+            detail="An unexpected error occurred. Try again or contact support.",
+            instance=str(request.url.path),
+            meta={
+                "requestId": getattr(request.state, "correlation_id", None),
+            },
+        )
+        return JSONResponse(
+            status_code=500,
+            content=problem.model_dump(by_alias=True, exclude_none=True),
+            media_type="application/problem+json",
+        )
+
 
 def create_app() -> FastAPI:
     configure_logging(settings.log_level)

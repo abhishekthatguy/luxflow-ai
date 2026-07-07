@@ -564,5 +564,182 @@
     "serial": 10,
     "summary": "Manual CI smoke \u2192 verify n8n can reach FastAPI internal health endpoint.",
     "display_name": "WF-10 \u00b7 Platform Smoke Callback"
+  },
+  {
+    "file": "infra/workflow-session-init-v1.json",
+    "name": "Workflow Session Initialize",
+    "slug": "workflow-session-init-v1",
+    "group": "infra",
+    "trigger": "webhook",
+    "tags": [
+      "wf-11"
+    ],
+    "meta": {
+      "purpose": "Create orchestrator session in Redis \u2014 run once on deploy or when heartbeat detects expiry.",
+      "domain_event": null,
+      "fastapi_trigger": "Manual / POST /webhook/workflow-session-init-v1",
+      "trigger": "Manual or webhook (also triggered by WF-12 on session expiry)",
+      "input": {},
+      "output": {
+        "sessionToken": "string",
+        "expiresAt": "iso8601"
+      },
+      "retries": 0,
+      "failure": "Business workflows blocked until session initialized",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "infra",
+      "group": "infra",
+      "serial": 11,
+      "summary": "Run once \u2014 create orchestrator session token in Redis (WF-11)."
+    },
+    "custom": "session-init",
+    "serial": 11,
+    "summary": "Run once \u2014 create orchestrator session token in Redis (WF-11).",
+    "display_name": "WF-11 \u00b7 Workflow Session Initialize"
+  },
+  {
+    "file": "infra/workflow-session-heartbeat-v1.json",
+    "name": "Workflow Session Heartbeat",
+    "slug": "workflow-session-heartbeat-v1",
+    "group": "infra",
+    "trigger": "schedule",
+    "cron": "*/5 * * * *",
+    "tags": [
+      "wf-12"
+    ],
+    "meta": {
+      "purpose": "Every 5 min \u2014 verify/refresh orchestrator session; re-run WF-11 if expired.",
+      "domain_event": null,
+      "fastapi_trigger": "n8n schedule only",
+      "trigger": "Cron every 5 minutes",
+      "input": {},
+      "output": {
+        "sessionValid": true,
+        "requiresInitialize": false
+      },
+      "retries": 0,
+      "failure": "Triggers WF-11 Initialize via webhook",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "infra",
+      "group": "infra",
+      "serial": 12,
+      "summary": "Every 5 min \u2014 refresh session; re-trigger WF-11 if expired."
+    },
+    "custom": "session-heartbeat",
+    "serial": 12,
+    "summary": "Every 5 min \u2014 refresh session; re-trigger WF-11 if expired.",
+    "display_name": "WF-12 \u00b7 Workflow Session Heartbeat"
+  },
+  {
+    "file": "notifications/notification-teams-v1.json",
+    "name": "Teams Notification Delivery",
+    "slug": "notification-teams-v1",
+    "group": "notifications",
+    "trigger": "webhook",
+    "tags": [
+      "wf-13"
+    ],
+    "meta": {
+      "purpose": "Deliver pre-built Adaptive Card to Microsoft Teams Incoming Webhook.",
+      "domain_event": "NotificationTeamsRequested",
+      "fastapi_trigger": "NotificationEngine Celery deliver_teams_notification",
+      "trigger": "POST /webhook/notification-teams-v1",
+      "input": {
+        "card": "object",
+        "teamsWebhookUrl": "string",
+        "correlationId": "string"
+      },
+      "output": {
+        "status": "accepted"
+      },
+      "retries": 3,
+      "failure": "Retry with backoff; DLQ after max attempts",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "notifications",
+      "group": "notifications",
+      "serial": 13,
+      "summary": "POST Adaptive Card payload to Microsoft Teams Incoming Webhook."
+    },
+    "custom": "notification-teams",
+    "serial": 13,
+    "summary": "POST Adaptive Card payload to Microsoft Teams Incoming Webhook.",
+    "display_name": "WF-13 \u00b7 Teams Notification Delivery"
+  },
+  {
+    "file": "notifications/notification-slack-v1.json",
+    "name": "Slack Notification Delivery",
+    "slug": "notification-slack-v1",
+    "group": "notifications",
+    "trigger": "webhook",
+    "tags": [
+      "wf-14"
+    ],
+    "meta": {
+      "purpose": "Deliver pre-built Block Kit message to Slack team channel.",
+      "domain_event": "NotificationSlackRequested",
+      "fastapi_trigger": "NotificationEngine Celery deliver_slack_notification",
+      "trigger": "POST /webhook/notification-slack-v1",
+      "input": {
+        "message": "object",
+        "slackBotToken": "string",
+        "slackChannelId": "string",
+        "slackWebhookUrl": "string",
+        "correlationId": "string"
+      },
+      "output": {
+        "status": "accepted"
+      },
+      "retries": 3,
+      "failure": "Retry with backoff; DLQ after max attempts",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "notifications",
+      "group": "notifications",
+      "serial": 14,
+      "summary": "POST Block Kit payload to Slack via Bot API or Incoming Webhook."
+    },
+    "custom": "notification-slack",
+    "serial": 14,
+    "summary": "POST Block Kit payload to Slack via Bot API or Incoming Webhook.",
+    "display_name": "WF-14 \u00b7 Slack Notification Delivery"
+  },
+  {
+    "file": "test/test-slack-notification-v1.json",
+    "name": "Slack Notification Smoke Test",
+    "slug": "test-slack-notification-v1",
+    "group": "test",
+    "trigger": "manual",
+    "tags": [
+      "wf-15"
+    ],
+    "meta": {
+      "purpose": "Manual Slack smoke \u2014 test notification-slack-v1 from n8n editor with dummy payloads.",
+      "domain_event": null,
+      "fastapi_trigger": "Manual only \u2014 n8n editor Execute Workflow",
+      "trigger": "Manual (n8n editor \u2014 do NOT activate)",
+      "input": {
+        "test_mode": "basic_text | client_created | case_created | workflow_failed | stub_no_credentials | via_fastapi"
+      },
+      "output": {
+        "pass": true,
+        "test_mode": "string",
+        "actual": "accepted|stub|sent"
+      },
+      "retries": 0,
+      "failure": "Inspect Report Result node \u2014 check SLACK_* env on n8n container",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "test",
+      "group": "test",
+      "serial": 15,
+      "summary": "Manual Slack smoke \u2014 switch test_mode in Pick Test Case node."
+    },
+    "custom": "test-slack",
+    "serial": 15,
+    "summary": "Manual Slack smoke \u2014 switch test_mode in Pick Test Case node.",
+    "display_name": "WF-15 \u00b7 Slack Notification Smoke Test"
   }
 ]

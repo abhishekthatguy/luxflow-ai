@@ -1,0 +1,306 @@
+{
+  "name": "WF-14 \u00b7 Slack Notification Delivery",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notification-slack-v1",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "notification-slack-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst token = body.slackBotToken;\nconst channel = body.slackChannelId;\nconst webhookUrl = body.slackWebhookUrl;\nconst msg = body.message || {};\nconst hasBot = token && channel ? 'yes' : 'no';\nconst hasWebhook = webhookUrl ? 'yes' : 'no';\nconst canSend = hasBot === 'yes' || hasWebhook === 'yes' ? 'yes' : 'no';\nconst useBot = hasBot === 'yes';\nreturn [{\n  json: {\n    ...body,\n    hasBot,\n    hasWebhook,\n    canSend,\n    slackAuth: useBot ? `Bearer ${token}` : '',\n    postUrl: useBot ? 'https://slack.com/api/chat.postMessage' : (webhookUrl || ''),\n    slackBody: useBot ? { ...msg, channel } : msg,\n    correlationId: body.correlationId,\n    message: canSend === 'yes' ? '' : 'Slack bot token+channel or webhook URL not configured',\n  }\n}];"
+      },
+      "id": "resolve-slack",
+      "name": "Resolve Slack Target",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "if-can-send",
+              "leftValue": "={{ $json.canSend }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-can-send",
+      "name": "Decision: Can Send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.postUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.slackAuth }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.slackBody }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "slack-post",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $('Resolve Slack Target').first().json;\nconst resp = $json.body ?? $json;\nconst useBot = req.hasBot === 'yes';\nlet ok = true;\nlet error = '';\nif (useBot) {\n  ok = resp.ok === true;\n  error = resp.error || '';\n} else {\n  ok = (resp.statusCode ?? 200) < 400;\n}\nreturn [{\n  json: {\n    correlationId: req.correlationId,\n    deliveryOk: ok ? 'yes' : 'no',\n    error: error || (ok ? '' : 'Slack delivery failed'),\n  }\n}];"
+      },
+      "id": "verify-slack",
+      "name": "Verify Slack Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "if-slack-ok",
+              "leftValue": "={{ $json.deliveryOk }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-slack-ok",
+      "name": "Decision: Slack OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'accepted', correlationId: $json.correlationId } }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'failed', correlationId: $json.correlationId, error: $json.error } }}"
+      },
+      "id": "respond-failed",
+      "name": "Respond Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1560,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'stub', correlationId: $json.correlationId, message: $json.message } }}"
+      },
+      "id": "respond-stub",
+      "name": "Respond Stub",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        900,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Resolve Slack Target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Slack Target": {
+      "main": [
+        [
+          {
+            "node": "Decision: Can Send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision: Can Send?": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Stub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Slack": {
+      "main": [
+        [
+          {
+            "node": "Verify Slack Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Slack Response": {
+      "main": [
+        [
+          {
+            "node": "Decision: Slack OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision: Slack OK?": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-14"
+    }
+  ],
+  "meta": {
+    "purpose": "Deliver pre-built Block Kit message to Slack team channel.",
+    "domain_event": "NotificationSlackRequested",
+    "fastapi_trigger": "NotificationEngine Celery deliver_slack_notification",
+    "trigger": "POST /webhook/notification-slack-v1",
+    "input": {
+      "message": "object",
+      "slackBotToken": "string",
+      "slackChannelId": "string",
+      "slackWebhookUrl": "string",
+      "correlationId": "string"
+    },
+    "output": {
+      "status": "accepted"
+    },
+    "retries": 3,
+    "failure": "Retry with backoff; DLQ after max attempts",
+    "owner": "platform-team",
+    "version": 1,
+    "category": "notifications",
+    "group": "notifications",
+    "serial": 14,
+    "summary": "POST Block Kit payload to Slack via Bot API or Incoming Webhook."
+  }
+}

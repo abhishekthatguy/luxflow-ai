@@ -23,11 +23,55 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Health Check', ok: true } }];"
+        "method": "POST",
+        "url": "http://api:8000/internal/workflows/scheduled/ops-health-monitor-v1/run",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}"
       },
-      "id": "check",
-      "name": "Health Check",
-      "type": "n8n-nodes-base.code",
+      "id": "run-job",
+      "name": "Run Scheduled Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "if-healthy",
+              "leftValue": "={{ ($json.data?.healthy ?? $json.healthy) !== false }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-healthy",
+      "name": "Decision: Healthy?",
+      "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
         680,
@@ -36,87 +80,18 @@
     },
     {
       "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Redis', ok: true } }];"
-      },
-      "id": "redis",
-      "name": "Redis",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        900,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'RabbitMQ', ok: true } }];"
-      },
-      "id": "rabbit",
-      "name": "RabbitMQ",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1120,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Celery', ok: true } }];"
-      },
-      "id": "celery",
-      "name": "Celery",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1340,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'API', ok: true } }];"
-      },
-      "id": "api",
-      "name": "API",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1560,
-        300
-      ]
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "http://api:8000/internal/notifications/admin",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"subject\": \"[LexFlow] WF-09 \\u00b7 Operations Health Monitor \\u2014 Create Incident\", \"body\": \"Workflow step completed: Create Incident\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-09 \\u00b7 Operations Health Monitor\", \"step\": \"Create Incident\", \"executionId\": \"{{ $execution.id }}\"}}"
+        "jsonBody": "={\"subject\": \"[LexFlow] ops-health-monitor-v1 \\u2014 Notify Ops\", \"body\": \"Workflow step completed: Notify Ops\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"ops-health-monitor-v1\", \"step\": \"Notify Ops\", \"executionId\": \"{{ $execution.id }}\"}}"
       },
-      "id": "incident",
-      "name": "Create Incident",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1780,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://api:8000/internal/notifications/admin",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"subject\": \"[LexFlow] WF-09 \\u00b7 Operations Health Monitor \\u2014 Notify Ops\", \"body\": \"Workflow step completed: Notify Ops\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-09 \\u00b7 Operations Health Monitor\", \"step\": \"Notify Ops\", \"executionId\": \"{{ $execution.id }}\"}}"
-      },
-      "id": "notify",
+      "id": "notify-fail",
       "name": "Notify Ops",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2000,
+        900,
         300
       ]
     }
@@ -126,70 +101,27 @@
       "main": [
         [
           {
-            "node": "Health Check",
+            "node": "Run Scheduled Job",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Health Check": {
+    "Run Scheduled Job": {
       "main": [
         [
           {
-            "node": "Redis",
+            "node": "Decision: Healthy?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Redis": {
+    "Decision: Healthy?": {
       "main": [
-        [
-          {
-            "node": "RabbitMQ",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "RabbitMQ": {
-      "main": [
-        [
-          {
-            "node": "Celery",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Celery": {
-      "main": [
-        [
-          {
-            "node": "API",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "API": {
-      "main": [
-        [
-          {
-            "node": "Create Incident",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create Incident": {
-      "main": [
+        [],
         [
           {
             "node": "Notify Ops",

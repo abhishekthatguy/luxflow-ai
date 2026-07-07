@@ -2,22 +2,70 @@
 
 from __future__ import annotations
 
+import logging
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound, select_autoescape
 
 from lexflow_api.domain.notification_events import EMAIL_TEMPLATE_MAP, NotificationEventType
 
-TEMPLATES_DIR = Path(__file__).resolve().parents[4] / "templates" / "emails"
+logger = logging.getLogger(__name__)
+
+
+def _resolve_templates_dir() -> Path:
+    """Find email templates — Docker mount, baked image, or repo-relative."""
+    if env_path := os.environ.get("LEXFLOW_EMAIL_TEMPLATES_DIR"):
+        candidate = Path(env_path)
+        if candidate.is_dir():
+            return candidate.resolve()
+
+    here = Path(__file__).resolve()
+    candidates = [
+        Path("/app/templates/emails"),
+        here.parents[4] / "templates" / "emails",
+        here.parents[3].parent / "templates" / "emails",
+    ]
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate.resolve()
+
+    fallback = Path("/app/templates/emails")
+    logger.warning("email templates dir missing — using fallback HTML (checked: %s)", candidates)
+    return fallback
+
+
+TEMPLATES_DIR = _resolve_templates_dir()
 
 
 @lru_cache(maxsize=1)
-def _env() -> Environment:
+def _env() -> Environment | None:
+    if not TEMPLATES_DIR.is_dir():
+        return None
     return Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=select_autoescape(["html", "xml"]),
+    )
+
+
+def _fallback_html(context: dict[str, Any], event_type: NotificationEventType) -> str:
+    headline = str(context.get("headline") or context.get("email_subject") or "LexFlow Notification")
+    body = str(
+        context.get("report_summary")
+        or context.get("description")
+        or context.get("error_message")
+        or context.get("body")
+        or ""
+    )
+    badge = str(context.get("status_badge") or event_type.value)
+    return (
+        "<!DOCTYPE html><html><body style=\"font-family:sans-serif;padding:24px;\">"
+        f"<h1>{headline}</h1>"
+        f"<p><strong>{badge}</strong></p>"
+        f"<pre style=\"white-space:pre-wrap;background:#f8fafc;padding:16px;\">{body}</pre>"
+        "</body></html>"
     )
 
 
@@ -27,9 +75,16 @@ def render_email(
 ) -> tuple[str, str]:
     """Return (subject, html_body)."""
     template_name = EMAIL_TEMPLATE_MAP.get(event_type, "workflow-completed")
-    env = _env()
     ctx = {**context, "event_type": event_type.value}
-    html = env.get_template(f"{template_name}.html").render(**ctx)
+    env = _env()
+    if env is not None:
+        try:
+            html = env.get_template(f"{template_name}.html").render(**ctx)
+        except TemplateNotFound:
+            logger.warning("template %s.html not found in %s", template_name, TEMPLATES_DIR)
+            html = _fallback_html(ctx, event_type)
+    else:
+        html = _fallback_html(ctx, event_type)
     subject = str(context.get("subject") or context.get("email_subject") or _default_subject(event_type, context))
     return subject, html
 
