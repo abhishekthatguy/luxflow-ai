@@ -1,0 +1,73 @@
+{
+  "name": "WF-10 \u00b7 Platform Smoke Callback",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/platform/smoke",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"source\": \"n8n\", \"correlationId\": \"{{ $execution.id }}\"}"
+      },
+      "id": "http",
+      "name": "Call FastAPI Smoke",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call FastAPI Smoke",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-10"
+    }
+  ],
+  "meta": {
+    "purpose": "CI/local smoke \u2014 verifies n8n can reach FastAPI internal smoke endpoint.",
+    "domain_event": null,
+    "fastapi_trigger": "Manual / scripts/verify/n8n-callback.sh",
+    "trigger": "Manual (CI / verify-n8n-callback)",
+    "input": {},
+    "output": {
+      "status": "ok"
+    },
+    "retries": 0,
+    "failure": "Fail CI gate",
+    "owner": "platform-team",
+    "version": 1,
+    "category": "test",
+    "group": "test",
+    "serial": 10,
+    "summary": "Manual CI smoke \u2192 verify n8n can reach FastAPI internal health endpoint."
+  }
+}

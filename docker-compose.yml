@@ -97,20 +97,43 @@ services:
 
   n8n:
     image: n8nio/n8n:1.76.1
+    ports:
+      - "5679:5678"
     environment:
-      N8N_HOST: n8n
+      N8N_HOST: localhost
       N8N_PORT: 5678
       N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: http://localhost:5679
+      N8N_SECURE_COOKIE: "false"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
       WEBHOOK_URL: http://n8n:5678/
       GENERIC_TIMEZONE: UTC
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n/workflows:/workflows:ro
+      - ./n8n/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - ./n8n/purge-managed-workflows.js:/purge-managed-workflows.js:ro
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5678/healthz"]
       interval: 15s
       timeout: 5s
       retries: 10
+      start_period: 30s
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
       start_period: 30s
 
   api:
@@ -139,6 +162,22 @@ services:
       ENVIRONMENT: local
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
       JWT_ACCESS_TTL_MINUTES: ${JWT_ACCESS_TTL_MINUTES:-60}
+      OLLAMA_BASE_URL: http://ollama:11434
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_ALLOW_STUB: ${LLM_ALLOW_STUB:-true}
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-qwen2.5:latest}
+      ADMIN_NOTIFICATION_EMAILS: ${ADMIN_NOTIFICATION_EMAILS:-}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-LexFlow AI Workflow Engine}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-}
+      MANAGING_PARTNER_EMAIL: ${MANAGING_PARTNER_EMAIL:-}
+      ATTORNEY_EMAIL: ${ATTORNEY_EMAIL:-}
+      ASSOCIATE_EMAIL: ${ASSOCIATE_EMAIL:-}
+      PARALEGAL_EMAIL: ${PARALEGAL_EMAIL:-}
+      SYSTEM_ADMINISTRATOR_EMAIL: ${SYSTEM_ADMINISTRATOR_EMAIL:-}
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
+      NOTIFICATION_WEB_BASE_URL: ${NOTIFICATION_WEB_BASE_URL:-http://localhost:3000}
+      GMAIL_USER: ${GMAIL_USER:-}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -148,6 +187,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      ollama:
+        condition: service_started
       otel-collector:
         condition: service_started
     healthcheck:
@@ -158,6 +199,10 @@ services:
       start_period: 20s
     volumes:
       - ./tests:/tests:ro
+      - ./apps/api/scripts:/app/scripts
+      - ./apps/api/src:/app/src
+      - ./apps/api/templates:/app/templates
+      - ./config:/config:ro
 
   worker:
     build:
@@ -177,9 +222,25 @@ services:
       S3_PRESIGN_ENDPOINT: http://localhost:9000
       N8N_INTERNAL_URL: http://n8n:5678
       N8N_WEBHOOK_SECRET: dev-n8n-webhook-secret
+      OLLAMA_BASE_URL: http://ollama:11434
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_ALLOW_STUB: ${LLM_ALLOW_STUB:-true}
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-qwen2.5:latest}
+      OCR_PROVIDER: local
+      OCR_ENABLE_PADDLE: "true"
+      EMBEDDING_ENABLED: "true"
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SERVICE_NAME: lexflow-worker
       ENVIRONMENT: local
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-LexFlow AI Workflow Engine}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-}
+      MANAGING_PARTNER_EMAIL: ${MANAGING_PARTNER_EMAIL:-}
+      ATTORNEY_EMAIL: ${ATTORNEY_EMAIL:-}
+      ASSOCIATE_EMAIL: ${ASSOCIATE_EMAIL:-}
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-}
+      NOTIFICATION_WEB_BASE_URL: ${NOTIFICATION_WEB_BASE_URL:-http://localhost:3000}
+      GMAIL_USER: ${GMAIL_USER:-}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -187,8 +248,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      ollama:
+        condition: service_started
       api:
         condition: service_healthy
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/templates:/app/templates
+      - ./apps/api/scripts:/app/scripts
     healthcheck:
       test: ["CMD-SHELL", "celery -A lexflow_api.celery_app:celery_app inspect ping -t 5 | grep -q OK"]
       interval: 30s
@@ -239,3 +306,4 @@ volumes:
   postgres_data:
   minio_data:
   n8n_data:
+  ollama_data:

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, Query, Request, Response
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser, get_current_user
@@ -59,11 +60,32 @@ async def list_cases(
 async def create_case(
     request: Request,
     body: CaseCreate,
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
     user: CurrentUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[CaseResponse]:
+    if idempotency_key:
+        from lexflow_api.models.cases import Case
+
+        existing = await session.execute(
+            select(Case).where(
+                Case.firm_id == user.firm_id,
+                Case.metadata_["idempotencyKey"].astext == idempotency_key,
+                Case.deleted_at.is_(None),
+            )
+        )
+        found = existing.scalar_one_or_none()
+        if found is not None:
+            return envelope(CaseService(session).to_case_response(found), _request_id(request))
+
     service = CaseService(session)
+    metadata = dict(body.metadata or {})
+    if idempotency_key:
+        metadata["idempotencyKey"] = idempotency_key
+    if metadata:
+        body = body.model_copy(update={"metadata": metadata})
     case = await service.create_case(user, body)
+    await session.commit()
     return envelope(case, _request_id(request))
 
 

@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser
 from lexflow_api.config import settings
-from lexflow_api.exceptions import NotFoundError
+from lexflow_api.auth.rbac import FIRM_WIDE_ACCESS_ROLES, has_any_role
+from lexflow_api.auth.workflow_rbac import can_delete_workflow_execution, can_trigger_workflow
+from lexflow_api.exceptions import ConflictError, ForbiddenError, NotFoundError
 from lexflow_api.models.workflows import (
     ExecutionStatus,
     WorkflowDefinition,
@@ -24,10 +26,17 @@ from lexflow_api.schemas.workflows import (
     WorkflowExecutionResponse,
     WorkflowStepResponse,
     WorkflowTriggerRequest,
+    WorkflowTriggerResult,
 )
 from lexflow_api.services.case_service import CaseService
 from lexflow_api.services.job_service import JobService
 from lexflow_api.services.outbox import write_outbox_event
+from lexflow_api.services.workflow_dedup import (
+    case_intake_key,
+    document_upload_key,
+    workflow_event_key,
+    workflow_manual_key,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +48,17 @@ class WorkflowService:
         self._jobs = JobService(session)
 
     @staticmethod
-    def to_execution_response(execution: WorkflowExecution) -> WorkflowExecutionResponse:
+    def to_execution_response(
+        execution: WorkflowExecution,
+        *,
+        workflow_slug: str | None = None,
+        workflow_name: str | None = None,
+    ) -> WorkflowExecutionResponse:
         return WorkflowExecutionResponse(
             id=execution.id,
             workflow_definition_id=execution.workflow_definition_id,
+            workflow_slug=workflow_slug,
+            workflow_name=workflow_name,
             case_id=execution.case_id,
             status=execution.status,
             correlation_id=execution.correlation_id,
@@ -65,12 +81,44 @@ class WorkflowService:
         )
 
     async def trigger_workflow(
-        self, user: CurrentUser, case_id: UUID, data: WorkflowTriggerRequest
-    ) -> JobAcceptedResponse:
+        self,
+        user: CurrentUser,
+        case_id: UUID,
+        data: WorkflowTriggerRequest,
+        *,
+        idempotency_key: str | None = None,
+    ) -> WorkflowTriggerResult:
         await self._cases._get_accessible_case(user, case_id)
         definition = await self._get_definition(data.workflow_slug, user.firm_id)
-        correlation_id = uuid4()
+        if not can_trigger_workflow(user_roles=user.roles, slug=data.workflow_slug):
+            raise ForbiddenError(
+                f"Your role cannot trigger workflow '{definition.name}'. "
+                f"Required roles are configured in the workflow catalog."
+            )
 
+        if data.force and not has_any_role(user.roles, FIRM_WIDE_ACCESS_ROLES):
+            raise ForbiddenError("Only Managing Partner or System Administrator can force re-trigger.")
+
+        dedup_key: str | None = None
+        if not data.force:
+            if idempotency_key:
+                dedup_key = workflow_manual_key(
+                    slug=data.workflow_slug, case_id=case_id, idempotency_key=idempotency_key
+                )
+            else:
+                dedup_key = workflow_event_key(slug=data.workflow_slug, aggregate_id=case_id)
+            existing = await self._find_active_or_completed_execution(dedup_key)
+            if existing is not None:
+                job = await self._jobs.find_for_resource("workflow_execution", existing.id)
+                return WorkflowTriggerResult(
+                    job_id=job.id if job else existing.id,
+                    status=existing.status,
+                    status_url=f"/api/v1/jobs/{job.id}" if job else f"/api/v1/cases/{case_id}/workflows",
+                    execution_id=existing.id,
+                    deduplicated=True,
+                )
+
+        correlation_id = uuid4()
         execution = WorkflowExecution(
             workflow_definition_id=definition.id,
             case_id=case_id,
@@ -79,6 +127,7 @@ class WorkflowService:
             status=ExecutionStatus.QUEUED,
             input_payload={"workflowSlug": data.workflow_slug, "caseId": str(case_id)},
             correlation_id=correlation_id,
+            idempotency_key=dedup_key,
         )
         self._session.add(execution)
         await self._session.flush()
@@ -103,31 +152,133 @@ class WorkflowService:
 
         from lexflow_api.tasks.workflow_tasks import invoke_n8n_workflow
 
+        await self._session.commit()
         invoke_n8n_workflow.delay(str(execution.id), str(job.id))
 
-        return JobAcceptedResponse(
+        return WorkflowTriggerResult(
             job_id=job.id,
             status="queued",
             status_url=f"/api/v1/jobs/{job.id}",
+            execution_id=execution.id,
+            deduplicated=False,
         )
+
+    async def trigger_firm_workflow(
+        self,
+        user: CurrentUser,
+        data: WorkflowTriggerRequest,
+        *,
+        idempotency_key: str | None = None,
+    ) -> WorkflowTriggerResult:
+        """Manual/test trigger for firm-scoped workflows (no case context)."""
+        definition = await self._get_definition(data.workflow_slug, user.firm_id)
+        if not can_trigger_workflow(user_roles=user.roles, slug=data.workflow_slug):
+            raise ForbiddenError(
+                f"Your role cannot trigger workflow '{definition.name}'."
+            )
+
+        if data.force and not has_any_role(user.roles, FIRM_WIDE_ACCESS_ROLES):
+            raise ForbiddenError("Only Managing Partner or System Administrator can force re-trigger.")
+
+        dedup_key: str | None = None
+        if not data.force:
+            if idempotency_key:
+                dedup_key = workflow_manual_key(
+                    slug=data.workflow_slug, case_id=None, idempotency_key=idempotency_key
+                )
+            existing = await self._find_active_or_completed_execution(dedup_key)
+            if existing is not None:
+                job = await self._jobs.find_for_resource("workflow_execution", existing.id)
+                return WorkflowTriggerResult(
+                    job_id=job.id if job else existing.id,
+                    status=existing.status,
+                    status_url=f"/api/v1/jobs/{job.id}" if job else "/api/v1/workflows/catalog",
+                    execution_id=existing.id,
+                    deduplicated=True,
+                )
+
+        correlation_id = uuid4()
+        execution = WorkflowExecution(
+            workflow_definition_id=definition.id,
+            case_id=None,
+            firm_id=user.firm_id,
+            triggered_by=user.id,
+            status=ExecutionStatus.QUEUED,
+            input_payload={"workflowSlug": data.workflow_slug, "firmId": str(user.firm_id)},
+            correlation_id=correlation_id,
+            idempotency_key=dedup_key,
+        )
+        self._session.add(execution)
+        await self._session.flush()
+
+        job = await self._jobs.create_job(
+            firm_id=user.firm_id,
+            user_id=user.id,
+            case_id=None,
+            job_type="workflow.execution",
+            resource_type="workflow_execution",
+            resource_id=execution.id,
+            correlation_id=correlation_id,
+        )
+        await self._session.commit()
+        from lexflow_api.tasks.workflow_tasks import invoke_n8n_workflow
+
+        invoke_n8n_workflow.delay(str(execution.id), str(job.id))
+
+        return WorkflowTriggerResult(
+            job_id=job.id,
+            status="queued",
+            status_url=f"/api/v1/jobs/{job.id}",
+            execution_id=execution.id,
+            deduplicated=False,
+        )
+
+    async def delete_execution(
+        self, user: CurrentUser, case_id: UUID, execution_id: UUID
+    ) -> None:
+        if not can_delete_workflow_execution(user_roles=user.roles):
+            raise ForbiddenError(
+                "Only Managing Partner or System Administrator can delete workflow executions."
+            )
+        await self._cases._get_accessible_case(user, case_id)
+        execution = await self._get_accessible_execution(user, execution_id)
+        if execution.case_id != case_id:
+            raise NotFoundError("Workflow execution not found for this case.")
+        await self._session.delete(execution)
 
     async def list_executions(
         self, user: CurrentUser, case_id: UUID, *, page: int = 1, page_size: int = 25
     ) -> tuple[list[WorkflowExecutionResponse], int]:
         await self._cases._get_accessible_case(user, case_id)
-        query = select(WorkflowExecution).where(
-            WorkflowExecution.case_id == case_id,
-            WorkflowExecution.firm_id == user.firm_id,
+        query = (
+            select(WorkflowExecution, WorkflowDefinition.slug, WorkflowDefinition.name)
+            .join(
+                WorkflowDefinition,
+                WorkflowDefinition.id == WorkflowExecution.workflow_definition_id,
+            )
+            .where(
+                WorkflowExecution.case_id == case_id,
+                WorkflowExecution.firm_id == user.firm_id,
+            )
         )
         count_result = await self._session.execute(
-            select(func.count()).select_from(query.subquery())
+            select(func.count()).select_from(
+                select(WorkflowExecution.id).where(
+                    WorkflowExecution.case_id == case_id,
+                    WorkflowExecution.firm_id == user.firm_id,
+                ).subquery()
+            )
         )
         total = int(count_result.scalar_one())
         offset = (page - 1) * page_size
         result = await self._session.execute(
             query.order_by(WorkflowExecution.created_at.desc()).offset(offset).limit(page_size)
         )
-        return [self.to_execution_response(e) for e in result.scalars().all()], total
+        rows = [
+            self.to_execution_response(execution, workflow_slug=slug, workflow_name=name)
+            for execution, slug, name in result.all()
+        ]
+        return rows, total
 
     async def list_steps(self, user: CurrentUser, execution_id: UUID) -> list[WorkflowStepResponse]:
         execution = await self._get_accessible_execution(user, execution_id)
@@ -146,7 +297,14 @@ class WorkflowService:
         if execution is None:
             raise NotFoundError("Workflow execution not found.")
 
-        execution.status = payload.status
+        if execution.status in (ExecutionStatus.COMPLETED, ExecutionStatus.FAILED, ExecutionStatus.CANCELLED):
+            return
+
+        normalized = payload.status.lower()
+        if normalized not in ("queued", "running", "completed", "failed", "cancelled"):
+            normalized = "completed" if normalized in ("ok", "success") else "failed"
+
+        execution.status = ExecutionStatus(normalized)
         execution.n8n_execution_id = payload.n8n_execution_id
         execution.output_payload = payload.output
         execution.error_message = payload.error_message
@@ -177,7 +335,7 @@ class WorkflowService:
             select(WorkflowDefinition).where(
                 WorkflowDefinition.is_active.is_(True),
                 WorkflowDefinition.trigger_type == "event",
-                WorkflowDefinition.slug == "document-upload-notify-v1",
+                WorkflowDefinition.slug == "document-upload-v1",
             )
         )
         definition = result.scalar_one_or_none()
@@ -238,6 +396,21 @@ class WorkflowService:
         except Exception as exc:
             logger.exception("n8n webhook call failed")
             return {"status": "failed", "error": str(exc)}
+
+    async def _find_active_or_completed_execution(
+        self, idempotency_key: str | None
+    ) -> WorkflowExecution | None:
+        if not idempotency_key:
+            return None
+        result = await self._session.execute(
+            select(WorkflowExecution).where(
+                WorkflowExecution.idempotency_key == idempotency_key,
+                WorkflowExecution.status.in_(
+                    (ExecutionStatus.QUEUED, ExecutionStatus.RUNNING, ExecutionStatus.COMPLETED)
+                ),
+            )
+        )
+        return result.scalar_one_or_none()
 
     async def _get_definition(self, slug: str, firm_id: UUID) -> WorkflowDefinition:
         result = await self._session.execute(

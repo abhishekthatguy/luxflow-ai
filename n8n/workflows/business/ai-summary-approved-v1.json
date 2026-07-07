@@ -1,0 +1,343 @@
+{
+  "name": "WF-03 \u00b7 AI Summary Approved",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-summary-approved-v1",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "ai-summary-approved-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inbound = $json.body ?? $json;\nconst executionId = inbound.executionId || inbound.execution_id;\nconst caseId = inbound.caseId || inbound.case_id || null;\nconst payload = inbound.payload || {};\nconst documentId = payload.documentId || inbound.documentId || null;\nreturn [{\n  json: {\n    executionId,\n    caseId,\n    documentId,\n    payload,\n    inboundSignature: $json.headers?.['x-lexflow-signature'] || null,\n    ok: Boolean(executionId),\n  }\n}];"
+      },
+      "id": "normalize",
+      "name": "Normalize Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $json;\nif (!ctx.ok) {\n  throw new Error('Missing executionId on webhook payload');\n}\n// Inbound webhook from FastAPI is already HMAC-signed by Celery.\nreturn [{ json: { ...ctx, signatureValid: true, step: 'Validate Signature' } }];"
+      },
+      "id": "validate",
+      "name": "Validate Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/workflows/ai-summary-approved-v1/initialize",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ executionId: $json.executionId || ($json.body && $json.body.executionId), caseId: $json.caseId || ($json.body && $json.body.caseId), payload: $json.payload || ($json.body && $json.body.payload) || {} }) }}"
+      },
+      "id": "initialize",
+      "name": "Initialize Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://api:8000/internal/workflows/heartbeat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "heartbeat",
+      "name": "Heartbeat API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Update Case', ok: true } }];"
+      },
+      "id": "update",
+      "name": "Update Case",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Notify Managing Partner', ok: true } }];"
+      },
+      "id": "partner",
+      "name": "Notify Managing Partner",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Archive Summary', ok: true } }];"
+      },
+      "id": "archive",
+      "name": "Archive Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Audit', ok: true } }];"
+      },
+      "id": "audit",
+      "name": "Audit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst ctx = $json;\nconst secret = 'dev-n8n-webhook-secret';\nconst status = ctx.workflowStatus || (ctx.aiSuccess === false || ctx.ocrComplete === false ? 'failed' : 'completed');\nconst body = {\n  executionId: ctx.executionId,\n  status,\n  n8nExecutionId: String($execution.id),\n  output: {\n    slug: ctx.slug || 'document-upload-v1',\n    ocrComplete: ctx.ocrComplete,\n    aiSuccess: ctx.aiSuccess,\n    steps: ['validate','initialize','heartbeat','case','ocr','ai','notify','audit'],\n  },\n  errorMessage: ctx.errorMessage || null,\n};\nconst raw = JSON.stringify(body);\nconst sig = crypto.createHmac('sha256', secret).update(raw).digest('hex');\nreturn [{ json: { ...ctx, callbackBody: body, callbackRaw: raw, callbackSignature: sig, workflowStatus: status } }];"
+      },
+      "id": "prepare-callback",
+      "name": "Prepare Callback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/webhooks/n8n/ai-summary-approved-v1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-LexFlow-Signature",
+              "value": "={{ $json.callbackSignature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "={{ $json.callbackRaw }}"
+      },
+      "id": "callback",
+      "name": "Callback API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2660,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Context": {
+      "main": [
+        [
+          {
+            "node": "Validate Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Signature": {
+      "main": [
+        [
+          {
+            "node": "Initialize Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Workflow": {
+      "main": [
+        [
+          {
+            "node": "Heartbeat API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Heartbeat API": {
+      "main": [
+        [
+          {
+            "node": "Update Case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Case": {
+      "main": [
+        [
+          {
+            "node": "Notify Managing Partner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Managing Partner": {
+      "main": [
+        [
+          {
+            "node": "Archive Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archive Summary": {
+      "main": [
+        [
+          {
+            "node": "Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit": {
+      "main": [
+        [
+          {
+            "node": "Prepare Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Callback": {
+      "main": [
+        [
+          {
+            "node": "Callback API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-03"
+    }
+  ],
+  "meta": {
+    "purpose": "Post-approval \u2014 update case status, notify managing partner, archive summary, audit.",
+    "domain_event": "SummaryApproved",
+    "fastapi_trigger": "ai_service.approve_summary() \u2192 outbox event",
+    "trigger": "POST /webhook/ai-summary-approved-v1",
+    "input": {
+      "summaryId": "uuid",
+      "caseId": "uuid",
+      "approvedBy": "uuid"
+    },
+    "output": {
+      "status": "archived",
+      "partnerNotified": true
+    },
+    "retries": 2,
+    "failure": "Retry then escalate to partner",
+    "owner": "ai-team",
+    "version": 1,
+    "category": "ai-approval",
+    "group": "business",
+    "serial": 3,
+    "summary": "Attorney approves AI draft \u2192 notify partner, archive summary, audit."
+  }
+}

@@ -1,0 +1,56 @@
+FORMAL CUSTOMER COMPLAINT — DATA BREACH NOTIFICATION RESPONSE
+Received: March 15, 2026 via Acme Customer Support Portal (Ticket #CS-2026-88421)
+Case Reference: CYB-2026-0045 | Customer ID: ACME-CUST-44892
+
+FROM
+Rebecca Thornton
+2847 Magnolia Drive, Austin, TX 78704
+rebecca.thornton@email.com | (512) 555-0147
+Acme Premium Subscription Member since 2019
+
+TO
+Acme Corporation Customer Relations
+security-incident@acmecorp.com
+
+SUBJECT: Unauthorized Access to My Personal Information — Demand for Explanation
+
+Dear Acme Corporation,
+
+I received your form letter dated March 14, 2026 advising that my personal information
+"may have been involved" in a cybersecurity incident on March 12, 2026. This vague notice
+is unacceptable given the seriousness of your email's subject line: "Important Security
+Incident Affecting Your Account."
+
+COMPLAINT DETAILS
+
+1. EXPOSURE CONFIRMATION
+Your letter states the following data elements were potentially compromised:
+   - Full name and home address
+   - Email address and phone number
+   - Last four digits of my Visa card ending in 4892
+   - Acme account number ACME-CUST-44892
+   - Subscription history and support ticket contents
+
+I have since been notified by my bank of suspicious login attempts on March 13, 2026.
+I believe this is directly related to your breach.
+
+2. FAILURE TO PROTECT
+News reports reference 847 exposed records and a LockBit ransomware attack. Your notification
+arrived 48 hours after the incident. Texas Business and Commerce Code § 521.053 requires
+notification without unreasonable delay.
+
+3. DEMANDS
+I formally request within 15 business days:
+   (a) Specific confirmation whether MY data was exfiltrated (not "may have been")
+   (b) Copy of forensic findings relevant to my account
+   (c) Two years complimentary credit monitoring (your offer of 12 months is insufficient)
+   (d) Written explanation of why MFA was not protecting customer data systems
+   (e) Direct contact information for your outside counsel handling regulatory response
+
+4. REGULATORY FILINGS
+I am filing complaints with the Texas Attorney General, FTC (identitytheft.gov), and CFPB.
+I am evaluating participation in any class action related to this incident and have retained
+local counsel. I expect a substantive response, not a template acknowledgment.
+
+Sincerely, Rebecca Thornton | Date: March 15, 2026
+[Internal — Tier 2]: Escalated to Legal/FMG. Confirmed in 847-record export. No SSN. HIGH priority.

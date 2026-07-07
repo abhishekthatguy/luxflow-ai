@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin:0 0 8px;font-size:20px;color:#0f172a;">Daily Partner Report</h1>
+<p style="margin:0 0 24px;font-size:14px;color:#475569;">Summary of pending cases, failed AI jobs, and workflow errors.</p>
+{% include "_detail_table.html" %}
+{% if report_summary %}<pre style="background:#f8fafc;padding:16px;border-radius:6px;font-size:13px;color:#334155;white-space:pre-wrap;">{{ report_summary }}</pre>{% endif %}
+{% include "_activity_and_cta.html" %}
+{% endblock %}

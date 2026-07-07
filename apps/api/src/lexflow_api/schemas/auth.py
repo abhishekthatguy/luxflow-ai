@@ -30,4 +30,5 @@ class UserResponse(CamelModel):
     title: str | None = None
     firm_id: UUID
     roles: list[str]
+    permissions: list[str]
     last_login_at: datetime | None = None

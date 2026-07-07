@@ -18,17 +18,23 @@ from lexflow_api.models.identity import Firm, Role, User, UserRole
 
 
 ROLES = [
-    ("Attorney", "Licensed attorney"),
-    ("Paralegal", "Paralegal staff"),
-    ("ManagingPartner", "Managing partner with firm-wide access"),
     ("SystemAdministrator", "System administrator"),
+    ("ManagingPartner", "Managing partner with firm-wide access"),
+    ("Partner", "Equity partner — case operations and AI approval"),
+    ("Attorney", "Licensed attorney"),
     ("Associate", "Associate attorney"),
+    ("Paralegal", "Paralegal staff"),
+    ("LegalAssistant", "Legal assistant — intake and document support"),
 ]
 
 USERS = [
+    ("admin@example.com", "Sys", "Admin", "SystemAdministrator", "password123"),
+    ("partner@example.com", "Pat", "ManagingPartner", "ManagingPartner", "password123"),
+    ("equity@example.com", "Sam", "Partner", "Partner", "password123"),
     ("jane@example.com", "Jane", "Attorney", "Attorney", "password123"),
     ("john@example.com", "John", "Associate", "Associate", "password123"),
     ("alex@example.com", "Alex", "Paralegal", "Paralegal", "password123"),
+    ("assistant@example.com", "Lisa", "Assistant", "LegalAssistant", "password123"),
     ("outsider@example.com", "Outsider", "User", "Attorney", "password123"),
 ]
 
@@ -38,6 +44,7 @@ async def seed() -> None:
         existing = await session.execute(select(Firm).where(Firm.slug == "lexflow-dev"))
         if existing.scalar_one_or_none() is not None:
             print("Seed data already exists (firm lexflow-dev). Skipping.")
+            print("Run seed_rbac_enterprise.py to add Partner/LegalAssistant roles on existing DBs.")
             return
 
         firm = Firm(name="LexFlow Dev Firm", slug="lexflow-dev")
@@ -73,7 +80,7 @@ async def seed() -> None:
         )
         session.add(client)
         await session.commit()
-        print("Seed complete: firm=lexflow-dev, 4 users, 1 client")
+        print("Seed complete: firm=lexflow-dev, 8 users (all enterprise roles), 1 client")
 
 
 def main() -> None:

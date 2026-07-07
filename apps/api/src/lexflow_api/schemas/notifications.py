@@ -14,9 +14,15 @@ class NotificationResponse(CamelModel):
     channel: str
     title: str
     body: str
+    description: str | None = None
     status: str
     read_at: datetime | None
     sent_at: datetime | None
+    event_type: str | None = None
+    workflow_slug: str | None = None
+    priority: str | None = None
+    action_url: str | None = None
+    correlation_id: UUID | None = None
     metadata: dict[str, object]
     created_at: datetime
 
@@ -35,9 +41,15 @@ class NotificationResponse(CamelModel):
             "channel": channel,
             "title": data.title,
             "body": data.body,
+            "description": getattr(data, "description", None),
             "status": status,
             "read_at": data.read_at,
             "sent_at": data.sent_at,
+            "event_type": getattr(data, "event_type", None),
+            "workflow_slug": getattr(data, "workflow_slug", None),
+            "priority": getattr(data, "priority", None),
+            "action_url": getattr(data, "action_url", None),
+            "correlation_id": getattr(data, "correlation_id", None),
             "metadata": getattr(data, "metadata_", {}),
             "created_at": data.created_at,
         }

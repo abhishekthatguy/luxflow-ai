@@ -1,0 +1,58 @@
+CYBERGUARD INSURANCE COMPANY — CYBER LIABILITY POLICY
+Policy Number: CYB-ACME-2024-9912
+Named Insured: Acme Corporation
+Policy Period: July 1, 2025 – June 30, 2026
+Broker: Marsh Cyber Practice | Premium: $187,400 annual
+
+COVERAGE SUMMARY
+
+Coverage A — Network Security & Privacy Liability
+  Limit: $5,000,000 per claim / $5,000,000 aggregate
+  Retention: $250,000 per claim
+  Covers: Third-party claims, regulatory fines (where insurable), PCI assessments
+
+Coverage B — Privacy Breach Response Costs
+  Limit: $2,000,000
+  Retention: $100,000
+  Covers: Forensics, notification, credit monitoring, PR/crisis management, call center
+
+Coverage C — Network Business Interruption
+  Limit: $3,000,000
+  Waiting period: 8 hours | Retention: $500,000
+  Covers: Lost income during system outage from covered cyber event
+
+Coverage D — Cyber Extortion (Ransomware)
+  Limit: $1,000,000
+  Retention: $100,000
+  Covers: Ransom payments (with insurer pre-approval), negotiator fees, decryption support
+
+TOTAL POLICY LIMIT: $5,000,000 aggregate across all coverages (non-stacking)
+
+RANSOMWARE ENDORSEMENT (Form CYB-RW-2024)
+Insurer pre-approval required before any ransom payment exceeding $50,000.
+Acme must use panel vendor Chainalysis IR for negotiation (approved March 12, 2026).
+Ransom payment of 8 BTC (~$520,000 USD) submitted for approval March 13, 2026 — PENDING.
+
+KEY EXCLUSIONS
+1. War and cyber war (including state-sponsored attacks — attribution disputes excluded)
+2. Prior known circumstances (Veritas audit findings reported to underwriter Dec 2025 —
+   insurer reviewing whether unpatched VPN constitutes prior knowledge)
+3. Failure to maintain minimum security standards (MSS — see below)
+4. Bodily injury and property damage
+5. Intellectual property infringement
+6. Contractual liability beyond standard of care (CloudSecure SLA disputes excluded)
+7. Fines uninsurable under law (e.g., certain GDPR penalties)
+
+MINIMUM SECURITY STANDARDS (MSS) — CONDITION PRECEDENT
+Insured must maintain: MFA on remote access, encrypted backups, annual pen test,
+patch critical vulnerabilities within 30 days. Breach of MSS may reduce coverage 25–50%.
+
+CLAIM REPORTING
+Acme reported claim CLM-CYB-2026-4471 on March 12, 2026 at 3:45 PM EST.
+Assigned adjuster: Thomas Berg, Senior Cyber Claims | 48-hour onsite response confirmed.
+
+REGULATORY DEFENSE
+Policy includes $500,000 sublimit for SEC, state AG, and FTC investigation defense costs.
+No sublimit for legally required customer notification costs under Coverage B.
+
+Renewal at risk: Underwriter flagged open Veritas findings in March 2026 interim review.

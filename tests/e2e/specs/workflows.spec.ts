@@ -2,7 +2,7 @@ import { expect, test } from "../fixtures/case.fixture";
 import { WorkflowsPage } from "../pages/workflows.page";
 
 test.describe("Sprint 4 — Workflows", () => {
-  test("manually triggers document-upload-notify workflow", async ({ page, createCase }) => {
+  test("manually triggers document upload pipeline", async ({ page, createCase }) => {
     test.slow();
     const caseId = await createCase("E2E Workflow Trigger");
     const workflows = new WorkflowsPage(page);

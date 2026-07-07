@@ -109,7 +109,7 @@ esac
 WF_CODE="$(curl -s -o /dev/null -w '%{http_code}' -X POST "${API}/cases/${CASE_ID}/workflows/trigger" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"workflowSlug":"document-upload-notify-v1"}')"
+  -d '{"workflowSlug":"document-upload-v1"}')"
 
 case "$WF_CODE" in
   202)

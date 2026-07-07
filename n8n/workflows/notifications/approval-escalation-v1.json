@@ -1,0 +1,183 @@
+{
+  "name": "WF-07 \u00b7 Approval Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Pending Approval', ok: true } }];"
+      },
+      "id": "pending",
+      "name": "Pending Approval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Older than 24h', ok: true } }];"
+      },
+      "id": "old",
+      "name": "Older than 24h",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/notifications/admin",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"subject\": \"[LexFlow] WF-07 \\u00b7 Approval Escalation \\u2014 Reminder\", \"body\": \"Workflow step completed: Reminder\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-07 \\u00b7 Approval Escalation\", \"step\": \"Reminder\", \"executionId\": \"{{ $execution.id }}\"}}"
+      },
+      "id": "remind",
+      "name": "Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Still Pending', ok: true } }];"
+      },
+      "id": "still",
+      "name": "Still Pending",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/notifications/admin",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"subject\": \"[LexFlow] WF-07 \\u00b7 Approval Escalation \\u2014 Escalate to Partner\", \"body\": \"Workflow step completed: Escalate to Partner\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-07 \\u00b7 Approval Escalation\", \"step\": \"Escalate to Partner\", \"executionId\": \"{{ $execution.id }}\"}}"
+      },
+      "id": "escalate",
+      "name": "Escalate to Partner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Pending Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pending Approval": {
+      "main": [
+        [
+          {
+            "node": "Older than 24h",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Older than 24h": {
+      "main": [
+        [
+          {
+            "node": "Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reminder": {
+      "main": [
+        [
+          {
+            "node": "Still Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still Pending": {
+      "main": [
+        [
+          {
+            "node": "Escalate to Partner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-07"
+    }
+  ],
+  "meta": {
+    "purpose": "Hourly SLA check \u2014 approvals pending >24h get reminder, then partner escalation.",
+    "domain_event": null,
+    "fastapi_trigger": "n8n schedule only (no FastAPI trigger)",
+    "trigger": "Cron every hour",
+    "input": {},
+    "output": {
+      "escalatedCount": "number",
+      "remindersSent": "number"
+    },
+    "retries": 1,
+    "failure": "Log + infra health-monitor alert",
+    "owner": "operations-team",
+    "version": 1,
+    "category": "notifications",
+    "group": "notifications",
+    "serial": 7,
+    "summary": "Hourly SLA check \u2192 remind attorney; escalate to partner after 24h."
+  }
+}

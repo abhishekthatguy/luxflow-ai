@@ -32,3 +32,7 @@ class AISummaryResponse(CamelModel):
 
 class SummaryRejectRequest(CamelModel):
     reason: str = Field(min_length=1, max_length=2000)
+
+
+class SummaryUpdateRequest(CamelModel):
+    content: str = Field(min_length=1, max_length=50000)

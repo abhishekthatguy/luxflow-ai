@@ -1,5 +1,11 @@
 # Workflow Catalog
 
+> **Note:** This document describes the *original planning catalog* (7 planned workflows).  
+> **For the implemented v1 catalog**, see:
+> - [workflow-groups.md](./workflow-groups.md) — groups and business purpose  
+> - [workflow-technical-reference.md](./workflow-technical-reference.md) — auto-generated technical specs  
+> - [n8n/workflows/README.md](../../n8n/workflows/README.md) — repo folder index
+
 **LexFlow AI** — Initial Workflow Definitions & Triggers  
 **Version:** 1.0  
 **Status:** Draft — Pre-Implementation  

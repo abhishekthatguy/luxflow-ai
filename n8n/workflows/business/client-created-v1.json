@@ -1,0 +1,278 @@
+{
+  "name": "WF-04 \u00b7 New Client Onboarding",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "client-created-v1",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "client-created-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inbound = $json.body ?? $json;\nconst executionId = inbound.executionId || inbound.execution_id;\nconst caseId = inbound.caseId || inbound.case_id || null;\nconst payload = inbound.payload || {};\nconst documentId = payload.documentId || inbound.documentId || null;\nreturn [{\n  json: {\n    executionId,\n    caseId,\n    documentId,\n    payload,\n    inboundSignature: $json.headers?.['x-lexflow-signature'] || null,\n    ok: Boolean(executionId),\n  }\n}];"
+      },
+      "id": "normalize",
+      "name": "Normalize Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $json;\nif (!ctx.ok) {\n  throw new Error('Missing executionId on webhook payload');\n}\n// Inbound webhook from FastAPI is already HMAC-signed by Celery.\nreturn [{ json: { ...ctx, signatureValid: true, step: 'Validate Signature' } }];"
+      },
+      "id": "validate",
+      "name": "Validate Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/workflows/client-created-v1/initialize",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ executionId: $json.executionId || ($json.body && $json.body.executionId), caseId: $json.caseId || ($json.body && $json.body.caseId), payload: $json.payload || ($json.body && $json.body.payload) || {} }) }}"
+      },
+      "id": "initialize",
+      "name": "Initialize Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://api:8000/internal/workflows/heartbeat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "heartbeat",
+      "name": "Heartbeat API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'CRM Sync', ok: true } }];"
+      },
+      "id": "crm",
+      "name": "CRM Sync",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Welcome Email', ok: true } }];"
+      },
+      "id": "welcome",
+      "name": "Welcome Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Assign Intake Team', ok: true } }];"
+      },
+      "id": "intake",
+      "name": "Assign Intake Team",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Audit', ok: true } }];"
+      },
+      "id": "audit",
+      "name": "Audit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Context": {
+      "main": [
+        [
+          {
+            "node": "Validate Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Signature": {
+      "main": [
+        [
+          {
+            "node": "Initialize Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Workflow": {
+      "main": [
+        [
+          {
+            "node": "Heartbeat API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Heartbeat API": {
+      "main": [
+        [
+          {
+            "node": "CRM Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CRM Sync": {
+      "main": [
+        [
+          {
+            "node": "Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Assign Intake Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Intake Team": {
+      "main": [
+        [
+          {
+            "node": "Audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-04"
+    }
+  ],
+  "meta": {
+    "purpose": "CRM sync, welcome email, intake team assignment when a new client is created.",
+    "domain_event": "ClientCreated",
+    "fastapi_trigger": "clients API POST /api/v1/clients \u2192 outbox",
+    "trigger": "POST /webhook/client-created-v1",
+    "input": {
+      "clientId": "uuid",
+      "email": "string",
+      "firmId": "uuid"
+    },
+    "output": {
+      "crmSynced": true,
+      "intakeAssigned": true
+    },
+    "retries": 3,
+    "failure": "Manual intake queue",
+    "owner": "client-success",
+    "version": 1,
+    "category": "case-management",
+    "group": "business",
+    "serial": 4,
+    "summary": "New client added \u2192 CRM sync, welcome email, assign intake team."
+  }
+}

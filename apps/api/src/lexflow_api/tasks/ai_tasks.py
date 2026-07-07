@@ -14,7 +14,10 @@ from lexflow_api.models.ai import AISummary, LLMUsage, PromptHistory, PromptTemp
 from lexflow_api.models.cases import Case
 from lexflow_api.models.documents import Document
 from lexflow_api.models.shared import AsyncJob
-from lexflow_api.services.llm_stub import generate_stub_summary, redact_pii
+from lexflow_api.services.case_context import gather_case_document_context
+from lexflow_api.services.llm import complete_with_fallback, persist_provider_name
+from lexflow_api.services.llm_stub import redact_pii
+from lexflow_api.services.timeline import write_timeline_event_sync
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +39,13 @@ def generate_ai_summary(summary_id: str, job_id: str) -> dict[str, str]:
         job.started_at = datetime.now(UTC)
         session.commit()
 
-        context = case.description or case.title
+        context = gather_case_document_context(session, case_id=summary.case_id)
         if summary.document_id:
             doc = session.execute(
                 select(Document).where(Document.id == summary.document_id)
             ).scalar_one_or_none()
             if doc and doc.ocr_text:
-                context = doc.ocr_text
+                context = f"Case title: {case.title}\n\n--- {doc.title} ---\n{doc.ocr_text}"
 
         template = session.execute(
             select(PromptTemplate).where(
@@ -52,12 +55,17 @@ def generate_ai_summary(summary_id: str, job_id: str) -> dict[str, str]:
         ).scalar_one()
 
         rendered = template.template.replace("{{ case_title }}", case.title).replace(
-            "{{ context }}", context[:4000]
+            "{{ context }}", context[:12000]
         )
-        llm_result = generate_stub_summary(
+        llm_config = dict(template.llm_config)
+        llm_config.setdefault("case_title", case.title)
+        llm_config.setdefault("summary_type", summary.summary_type)
+
+        llm_result = complete_with_fallback(
+            prompt=rendered,
+            llm_config=llm_config,
             case_title=case.title,
-            context=context,
-            summary_type=summary.summary_type,
+            context=context[:12000],
         )
 
         summary.content = llm_result.content
@@ -65,6 +73,36 @@ def generate_ai_summary(summary_id: str, job_id: str) -> dict[str, str]:
         summary.token_count = llm_result.input_tokens + llm_result.output_tokens
         summary.model = llm_result.model
         summary.updated_at = datetime.now(UTC)
+        stored_provider = persist_provider_name(llm_result.provider)
+
+        write_timeline_event_sync(
+            session,
+            case_id=summary.case_id,
+            firm_id=summary.firm_id,
+            event_type="ai.summary.ready",
+            title="AI summary ready for attorney review",
+            actor_id=summary.requested_by,
+            payload={"summaryId": str(summary.id)},
+        )
+
+        from lexflow_api.services.notifications.helpers import queue_notification_event
+
+        queue_notification_event(
+            {
+                "event_type": "ai.summary.ready",
+                "firm_id": str(summary.firm_id),
+                "case_id": str(summary.case_id),
+                "title": "AI summary ready for review",
+                "description": "Attorney approval is required before distribution.",
+                "status_badge": "Approval Required",
+                "actor_id": str(summary.requested_by),
+                "context": {
+                    "current_stage": "AI Summary",
+                    "workflow_name": "Document Upload Pipeline",
+                    "recent_activity": ["OCR completed", "AI summary generated"],
+                },
+            }
+        )
 
         history = PromptHistory(
             case_id=summary.case_id,
@@ -74,7 +112,7 @@ def generate_ai_summary(summary_id: str, job_id: str) -> dict[str, str]:
             rendered_prompt=redact_pii(rendered),
             response=llm_result.content,
             model=llm_result.model,
-            provider="azure_openai",
+            provider=stored_provider,
             input_tokens=llm_result.input_tokens,
             output_tokens=llm_result.output_tokens,
             status="success",
@@ -87,7 +125,7 @@ def generate_ai_summary(summary_id: str, job_id: str) -> dict[str, str]:
                 LLMUsage.firm_id == summary.firm_id,
                 LLMUsage.user_id == summary.requested_by,
                 LLMUsage.case_id == summary.case_id,
-                LLMUsage.provider == "stub",
+                LLMUsage.provider == stored_provider,
                 LLMUsage.model == llm_result.model,
                 LLMUsage.period_start == date.today(),
             )
@@ -97,7 +135,7 @@ def generate_ai_summary(summary_id: str, job_id: str) -> dict[str, str]:
                 firm_id=summary.firm_id,
                 user_id=summary.requested_by,
                 case_id=summary.case_id,
-                provider="stub",
+                provider=stored_provider,
                 model=llm_result.model,
                 input_tokens=llm_result.input_tokens,
                 output_tokens=llm_result.output_tokens,

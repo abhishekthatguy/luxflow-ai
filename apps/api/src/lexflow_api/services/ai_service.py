@@ -5,22 +5,26 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser
-from lexflow_api.auth.rbac import (
-    FIRM_WIDE_ACCESS_ROLES,
-    ROLE_ATTORNEY,
-    has_any_role,
-)
+from lexflow_api.auth.permissions import PERM_APPROVE_AI, PERM_REQUEST_AI, has_permission
 from lexflow_api.exceptions import ConflictError, ForbiddenError, NotFoundError
 from lexflow_api.models.ai import AISummary, PromptTemplate, SummaryStatus, SummaryType
+from lexflow_api.models.cases import Case, CaseParticipant
 from lexflow_api.models.documents import Document
-from lexflow_api.schemas.ai import AISummaryResponse, SummarizeRequest, SummaryRejectRequest
+from lexflow_api.schemas.ai import (
+    AISummaryResponse,
+    SummarizeRequest,
+    SummaryRejectRequest,
+    SummaryUpdateRequest,
+)
 from lexflow_api.schemas.jobs import JobAcceptedResponse
 from lexflow_api.services.audit import write_audit_log
 from lexflow_api.services.case_service import CaseService
 from lexflow_api.services.job_service import JobService
 from lexflow_api.services.outbox import write_outbox_event
+from lexflow_api.services.timeline import write_timeline_event
 
-APPROVAL_ROLES = frozenset({ROLE_ATTORNEY, *FIRM_WIDE_ACCESS_ROLES, "Associate"})
+def _can_approve(user_roles: set[str]) -> bool:
+    return has_permission(user_roles, PERM_APPROVE_AI)
 
 
 class AIService:
@@ -52,7 +56,31 @@ class AIService:
     async def request_summary(
         self, user: CurrentUser, case_id: UUID, data: SummarizeRequest
     ) -> JobAcceptedResponse:
+        if not has_permission(user.roles, PERM_REQUEST_AI):
+            raise ForbiddenError("Your role is not permitted to request AI summaries.")
         case = await self._cases._get_accessible_case(user, case_id)
+
+        docs_result = await self._session.execute(
+            select(Document).where(
+                Document.case_id == case_id,
+                Document.firm_id == user.firm_id,
+                Document.deleted_at.is_(None),
+            )
+        )
+        case_docs = docs_result.scalars().all()
+        if not case_docs:
+            raise ConflictError("Upload at least one document before generating a summary.")
+        pending_ocr = [
+            d.title
+            for d in case_docs
+            if d.ocr_status not in ("completed", "skipped")
+        ]
+        if pending_ocr:
+            raise ConflictError(
+                "All documents must finish OCR before generating a summary. "
+                f"Still processing: {', '.join(pending_ocr)}"
+            )
+
         if data.document_id:
             doc_result = await self._session.execute(
                 select(Document).where(
@@ -110,6 +138,7 @@ class AIService:
 
         from lexflow_api.tasks.ai_tasks import generate_ai_summary
 
+        await self._session.commit()
         generate_ai_summary.delay(str(summary.id), str(job.id))
 
         return JobAcceptedResponse(
@@ -130,7 +159,7 @@ class AIService:
             AISummary.case_id == case_id,
             AISummary.firm_id == user.firm_id,
         )
-        if not has_any_role(user.roles, APPROVAL_ROLES):
+        if not _can_approve(user.roles):
             query = query.where(
                 (AISummary.status == SummaryStatus.APPROVED)
                 | (AISummary.requested_by == user.id)
@@ -145,9 +174,30 @@ class AIService:
         )
         return [self.to_response(s) for s in result.scalars().all()], total
 
+    async def update_draft_summary(
+        self, user: CurrentUser, summary_id: UUID, data: SummaryUpdateRequest
+    ) -> AISummaryResponse:
+        if not _can_approve(user.roles):
+            raise ForbiddenError("Your role is not permitted to approve AI summaries.")
+        summary = await self._get_accessible_summary(user, summary_id)
+        if summary.status != SummaryStatus.DRAFT:
+            raise ConflictError("Only draft summaries can be edited.")
+        summary.content = data.content
+        summary.updated_at = datetime.now(UTC)
+        await write_audit_log(
+            self._session,
+            firm_id=user.firm_id,
+            actor_id=user.id,
+            action="ai.summary.updated",
+            resource_type="ai_summary",
+            resource_id=summary.id,
+            details={"caseId": str(summary.case_id)},
+        )
+        return self.to_response(summary)
+
     async def approve_summary(self, user: CurrentUser, summary_id: UUID) -> AISummaryResponse:
-        if not has_any_role(user.roles, APPROVAL_ROLES):
-            raise ForbiddenError("Attorney approval required.")
+        if not _can_approve(user.roles):
+            raise ForbiddenError("Your role is not permitted to approve AI summaries.")
         summary = await self._get_accessible_summary(user, summary_id)
         if summary.status != SummaryStatus.DRAFT:
             raise ConflictError("Only draft summaries can be approved.")
@@ -155,6 +205,9 @@ class AIService:
         summary.approved_by = user.id
         summary.approved_at = datetime.now(UTC)
         summary.updated_at = datetime.now(UTC)
+
+        case = await self._cases._get_accessible_case(user, summary.case_id)
+
         await write_outbox_event(
             self._session,
             firm_id=user.firm_id,
@@ -163,6 +216,24 @@ class AIService:
             event_type="AiSummaryApproved",
             payload={"caseId": str(summary.case_id), "summaryId": str(summary.id)},
         )
+        await write_timeline_event(
+            self._session,
+            case_id=summary.case_id,
+            firm_id=user.firm_id,
+            event_type="AiSummaryApproved",
+            title="Attorney approved AI summary",
+            actor_id=user.id,
+            payload={"summaryId": str(summary.id), "caseNumber": case.case_number},
+        )
+        await write_timeline_event(
+            self._session,
+            case_id=summary.case_id,
+            firm_id=user.firm_id,
+            event_type="notification.sent",
+            title="Team notification sent",
+            actor_id=user.id,
+            payload={"summaryId": str(summary.id), "channel": "in_app"},
+        )
         await write_audit_log(
             self._session,
             firm_id=user.firm_id,
@@ -170,14 +241,16 @@ class AIService:
             action="ai.summary.approved",
             resource_type="ai_summary",
             resource_id=summary.id,
+            details={"caseId": str(summary.case_id), "caseNumber": case.case_number},
         )
+        await self._notify_summary_approved(summary, case, approver_id=user.id)
         return self.to_response(summary)
 
     async def reject_summary(
         self, user: CurrentUser, summary_id: UUID, data: SummaryRejectRequest
     ) -> AISummaryResponse:
-        if not has_any_role(user.roles, APPROVAL_ROLES):
-            raise ForbiddenError("Attorney approval required.")
+        if not _can_approve(user.roles):
+            raise ForbiddenError("Your role is not permitted to approve AI summaries.")
         summary = await self._get_accessible_summary(user, summary_id)
         if summary.status != SummaryStatus.DRAFT:
             raise ConflictError("Only draft summaries can be rejected.")
@@ -193,6 +266,28 @@ class AIService:
             resource_id=summary.id,
         )
         return self.to_response(summary)
+
+    async def _notify_summary_approved(
+        self, summary: AISummary, case: Case, *, approver_id: UUID
+    ) -> None:
+        from lexflow_api.domain.notification_events import NotificationEventType
+        from lexflow_api.services.notifications.helpers import emit_case_notification
+
+        await emit_case_notification(
+            self._session,
+            event_type=NotificationEventType.AI_SUMMARY_APPROVED,
+            firm_id=summary.firm_id,
+            case_id=case.id,
+            title="AI summary approved",
+            description=f"Case {case.case_number}: attorney-approved summary is ready for the team.",
+            status_badge="Approved",
+            actor_id=approver_id,
+            context={
+                "current_stage": "Approved",
+                "workflow_name": "AI Summary Approved",
+                "recent_activity": ["AI summary approved by attorney"],
+            },
+        )
 
     async def _get_active_template(self, slug: str) -> PromptTemplate:
         result = await self._session.execute(
@@ -218,9 +313,9 @@ class AIService:
             raise NotFoundError("Summary not found.")
         await self._cases._get_accessible_case(user, summary.case_id)
         if summary.status in (SummaryStatus.DRAFT, SummaryStatus.GENERATING):
-            if summary.requested_by != user.id and not has_any_role(user.roles, APPROVAL_ROLES):
+            if summary.requested_by != user.id and not _can_approve(user.roles):
                 raise NotFoundError("Summary not found.")
         elif summary.status != SummaryStatus.APPROVED:
-            if summary.requested_by != user.id and not has_any_role(user.roles, APPROVAL_ROLES):
+            if summary.requested_by != user.id and not _can_approve(user.roles):
                 raise NotFoundError("Summary not found.")
         return summary

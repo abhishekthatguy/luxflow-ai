@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}[LexFlow] {{ status_badge|default('Case Created') }} — {{ case_title|default('New Case') }}{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 8px;font-size:20px;color:#0f172a;">New Case Created</h1>
+<p style="margin:0 0 24px;font-size:14px;color:#475569;">A new matter has been opened and intake workflow has started.</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:24px;">
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;width:140px;">Case</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;font-weight:600;">{{ case_title|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Client</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ client_name|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Attorney</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ attorney_name|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Practice Area</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ practice_area|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;font-size:13px;color:#64748b;">Priority</td><td style="padding:8px 0;font-size:14px;color:#0f172a;">{{ priority|default('Normal') }}</td></tr>
+</table>
+{% if case_url %}
+<a href="{{ case_url }}" style="display:inline-block;padding:12px 24px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;">Open Case</a>
+{% endif %}
+{% endblock %}

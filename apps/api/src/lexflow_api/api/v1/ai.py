@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser, get_current_user
 from lexflow_api.db.session import get_db
-from lexflow_api.schemas.ai import AISummaryResponse, SummarizeRequest, SummaryRejectRequest
+from lexflow_api.schemas.ai import AISummaryResponse, SummarizeRequest, SummaryRejectRequest, SummaryUpdateRequest
 from lexflow_api.schemas.common import Envelope, envelope, pagination_meta
 from lexflow_api.schemas.jobs import JobAcceptedResponse
 from lexflow_api.services.ai_service import AIService
@@ -53,6 +53,18 @@ async def get_summary(
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[AISummaryResponse]:
     summary = await AIService(session).get_summary(user, summary_id)
+    return envelope(summary, _request_id(request))
+
+
+@ai_router.patch("/summaries/{summary_id}", response_model=Envelope[AISummaryResponse])
+async def update_summary(
+    request: Request,
+    summary_id: UUID,
+    body: SummaryUpdateRequest,
+    user: CurrentUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> Envelope[AISummaryResponse]:
+    summary = await AIService(session).update_draft_summary(user, summary_id, body)
     return envelope(summary, _request_id(request))
 
 

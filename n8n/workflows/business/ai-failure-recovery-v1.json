@@ -1,0 +1,306 @@
+{
+  "name": "WF-06 \u00b7 AI Failure Recovery",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-failure-recovery-v1",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "ai-failure-recovery-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inbound = $json.body ?? $json;\nconst executionId = inbound.executionId || inbound.execution_id;\nconst caseId = inbound.caseId || inbound.case_id || null;\nconst payload = inbound.payload || {};\nconst documentId = payload.documentId || inbound.documentId || null;\nreturn [{\n  json: {\n    executionId,\n    caseId,\n    documentId,\n    payload,\n    inboundSignature: $json.headers?.['x-lexflow-signature'] || null,\n    ok: Boolean(executionId),\n  }\n}];"
+      },
+      "id": "normalize",
+      "name": "Normalize Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $json;\nif (!ctx.ok) {\n  throw new Error('Missing executionId on webhook payload');\n}\n// Inbound webhook from FastAPI is already HMAC-signed by Celery.\nreturn [{ json: { ...ctx, signatureValid: true, step: 'Validate Signature' } }];"
+      },
+      "id": "validate",
+      "name": "Validate Signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/workflows/ai-failure-recovery-v1/initialize",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ executionId: $json.executionId || ($json.body && $json.body.executionId), caseId: $json.caseId || ($json.body && $json.body.caseId), payload: $json.payload || ($json.body && $json.body.payload) || {} }) }}"
+      },
+      "id": "initialize",
+      "name": "Initialize Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://api:8000/internal/workflows/heartbeat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Internal-Token",
+              "value": "dev-n8n-webhook-secret"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        }
+      },
+      "id": "heartbeat",
+      "name": "Heartbeat API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Retry 1', ok: true } }];"
+      },
+      "id": "r1",
+      "name": "Retry 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Retry 2', ok: true } }];"
+      },
+      "id": "r2",
+      "name": "Retry 2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Retry 3', ok: true } }];"
+      },
+      "id": "r3",
+      "name": "Retry 3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Create Human Review', ok: true } }];"
+      },
+      "id": "review",
+      "name": "Create Human Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/notifications/admin",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"subject\": \"[LexFlow] WF-06 \\u00b7 AI Failure Recovery \\u2014 Notify Attorney\", \"body\": \"Workflow step completed: Notify Attorney\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-06 \\u00b7 AI Failure Recovery\", \"step\": \"Notify Attorney\", \"executionId\": \"{{ $execution.id }}\"}}"
+      },
+      "id": "notify",
+      "name": "Notify Attorney",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2440,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Context": {
+      "main": [
+        [
+          {
+            "node": "Validate Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Signature": {
+      "main": [
+        [
+          {
+            "node": "Initialize Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initialize Workflow": {
+      "main": [
+        [
+          {
+            "node": "Heartbeat API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Heartbeat API": {
+      "main": [
+        [
+          {
+            "node": "Retry 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry 1": {
+      "main": [
+        [
+          {
+            "node": "Retry 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry 2": {
+      "main": [
+        [
+          {
+            "node": "Retry 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry 3": {
+      "main": [
+        [
+          {
+            "node": "Create Human Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Human Review": {
+      "main": [
+        [
+          {
+            "node": "Notify Attorney",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-06"
+    }
+  ],
+  "meta": {
+    "purpose": "Retry failed AI jobs 3\u00d7 then create human review task and notify attorney.",
+    "domain_event": "AIJobFailed",
+    "fastapi_trigger": "ai_tasks failure handler \u2192 workflow execution",
+    "trigger": "POST /webhook/ai-failure-recovery-v1",
+    "input": {
+      "jobId": "uuid",
+      "caseId": "uuid",
+      "documentId": "uuid"
+    },
+    "output": {
+      "recovered": "boolean",
+      "humanReview": "boolean"
+    },
+    "retries": 3,
+    "failure": "Human review task + admin notification",
+    "owner": "ai-team",
+    "version": 1,
+    "category": "ai-approval",
+    "group": "business",
+    "serial": 6,
+    "summary": "AI job failed \u2192 retry 3\u00d7, then create human review and alert attorney."
+  }
+}

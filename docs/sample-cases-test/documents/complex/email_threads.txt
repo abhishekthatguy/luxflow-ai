@@ -1,0 +1,33 @@
+ACME CORPORATION — INTERNAL EMAIL THREAD (CYB-2026-0045)
+Export: M365 eDiscovery EH-2026-0312 | Privilege Review: Pending FMG
+
+--- March 12, 2026 | URGENT — Production systems encrypted ---
+
+From: David Okonkwo <dokonkwo@acmecorp.com>
+To: Marcus Chen; IT-Ops | Time: 08:22 AM EST
+
+Marcus — Files renamed with .lockbit on FS-PROD-03/07. Ransom note: readme-lockbit.txt,
+15 BTC demand. CRM slow but up. VLAN 40 isolated. Need IR NOW. — David
+
+From: Marcus Chen | To: David Okonkwo; Jennifer Walsh | Time: 08:35 AM EST
+
+Good call on isolation. IRP-2024-Rev3 activated. Jennifer — FMG today. No attacker contact.
+Preservation hold on logs. Board at 2 PM. — Marcus
+
+From: Jennifer Walsh (GC) | Time: 10:15 AM EST
+
+FMG engaged under retainer. Mark subjects "ATTORNEY-CLIENT PRIVILEGED."
+Veritas audit flagged unpatched VPN — document for insurer. — Jennifer
+
+--- March 13, 2026 | PRIVILEGED — Initial forensic findings ---
+
+From: Priya Sharma (CrowdStrike) | To: Marcus Chen; FMG portal | Time: 07:45 AM EST
+
+Preliminary findings:
+- Entry: VPN via jmartinez_svc (no MFA — audit C-2025-02)
+- LockBit 3.0 confirmed; 847 customer records exfiltrated
+- 23 SSNs in legacy CRM — state breach notification likely
+- CloudSecure MSP admin VPN access during attack — logs requested
+
+Full report March 15. Hold customer notification pending FMG 50-state review.
+Draft letter pending GC — credit monitoring via CyberGuard Coverage B. — Priya

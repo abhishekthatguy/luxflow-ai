@@ -1,0 +1,57 @@
+INDEPENDENT SECURITY AUDIT REPORT — ACME CORPORATION
+Audit Period: September 15 – October 28, 2025
+Report Date: November 12, 2025
+Auditor: Veritas Cyber Assurance LLC
+Engagement: Annual IT General Controls & Cybersecurity Assessment
+Distribution: Board Audit Committee, CISO, CFO (CONFIDENTIAL)
+
+OVERALL RATING: NEEDS IMPROVEMENT (downgraded from SATISFACTORY in 2024 audit)
+
+EXECUTIVE SUMMARY
+Veritas conducted a risk-based assessment of Acme Corporation's information security program.
+The audit identified three critical findings and seven high-severity findings. Management agreed
+to remediate critical items by January 31, 2026. As of the March 2026 incident, two critical
+findings remained open.
+
+CRITICAL FINDINGS
+
+Finding C-2025-01: Unpatched VPN Gateway (CVSS 9.8)
+Severity: CRITICAL | Status at incident: OPEN (partial remediation)
+Description: Acme's Palo Alto GlobalProtect VPN gateway (vpn.acmecorp.com) was running
+PAN-OS 10.1.6, vulnerable to CVE-2024-3400 (command injection). Patch 10.1.11 was available
+since April 2025 but not applied. CloudSecure MSP cited change-window conflicts.
+Recommendation: Emergency patch within 72 hours; implement automated patch compliance scanning.
+Management Response: Patch scheduled for December 2025 — deferred twice due to holiday freeze.
+
+Finding C-2025-02: Multi-Factor Authentication Gaps
+Severity: CRITICAL | Status at incident: OPEN
+Description: MFA enforced for only 62% of workforce accounts. VPN, CRM admin console, and
+backup management interfaces lacked mandatory MFA. 14 service accounts used shared passwords.
+Recommendation: Enforce MFA on all remote access and privileged accounts by December 31, 2025.
+Management Response: Okta rollout Phase 2 delayed to Q1 2026 due to CRM integration issues.
+
+Finding C-2025-03: Inadequate Log Retention
+Severity: CRITICAL | Status at incident: REMEDIATED (November 2025)
+Description: Firewall logs retained only 30 days; SIEM ingestion gaps on weekends.
+Recommendation: Extend retention to 365 days; 24/7 SOC monitoring contract.
+
+HIGH FINDINGS (SUMMARY)
+H-01: Backup encryption keys stored on same network segment as production (OPEN)
+H-02: Vendor access reviews not performed quarterly for CloudSecure MSP (OPEN)
+H-03: Incident response tabletop exercise overdue (last conducted March 2024)
+H-04: Data classification policy not applied to CRM exports
+H-05: Privileged access management (PAM) not deployed for database administrators
+H-06: Security awareness training completion rate: 71% (target: 95%)
+H-07: Third-party penetration test findings from July 2025 not fully remediated
+
+COMPLIANCE MAPPING
+SOC 2 Type II: Two exceptions noted in CC6.1 (logical access) and CC7.2 (monitoring)
+PCI DSS: Requirement 8.3 (MFA) — non-compliant for cardholder data environment admin access
+State privacy laws: Gap analysis flagged delayed breach notification playbook updates
+
+AUDITOR OPINION
+The control environment did not adequately mitigate ransomware and credential theft risks.
+Veritas recommended board-level escalation of open critical findings. This report was shared
+with Acme's cyber insurance underwriter in December 2025 as part of renewal underwriting.
+
+Signed: Dr. Anita Reyes, CISSP, CISA | Lead Auditor, Veritas Cyber Assurance LLC

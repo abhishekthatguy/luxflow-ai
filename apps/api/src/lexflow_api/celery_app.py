@@ -12,6 +12,7 @@ celery_app = Celery(
         "lexflow_api.tasks.document_tasks",
         "lexflow_api.tasks.ai_tasks",
         "lexflow_api.tasks.workflow_tasks",
+        "lexflow_api.tasks.notification_tasks",
     ],
 )
 
@@ -22,6 +23,7 @@ celery_app.conf.update(
         "lexflow_api.tasks.document_tasks.*": {"queue": "platform.default"},
         "lexflow_api.tasks.ai_tasks.*": {"queue": "platform.default"},
         "lexflow_api.tasks.workflow_tasks.*": {"queue": "platform.default"},
+        "lexflow_api.tasks.notification_tasks.*": {"queue": "platform.default"},
     },
     result_expires=3600,
 )

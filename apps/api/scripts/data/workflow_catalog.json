@@ -1,0 +1,568 @@
+[
+  {
+    "file": "business/case-intake-v1.json",
+    "name": "Case Intake Automation",
+    "slug": "case-intake-v1",
+    "group": "business",
+    "trigger": "webhook",
+    "tags": [
+      "wf-01"
+    ],
+    "meta": {
+      "purpose": "Automate case intake \u2014 validate request, assign attorney, create tasks, notify Teams, audit.",
+      "domain_event": "CaseCreated",
+      "fastapi_trigger": "Outbox relay or POST /api/v1/cases/{id}/workflows/trigger",
+      "trigger": "POST /webhook/case-intake-v1 (Case Created)",
+      "input": {
+        "caseId": "uuid",
+        "firmId": "uuid",
+        "clientId": "uuid",
+        "executionId": "uuid"
+      },
+      "output": {
+        "status": "completed",
+        "assignedAttorney": "uuid"
+      },
+      "retries": 3,
+      "failure": "Dead-letter queue + admin notification",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "case-management",
+      "group": "business",
+      "serial": 1,
+      "summary": "New case created \u2192 validate, assign attorney, create tasks, notify Teams."
+    },
+    "steps": [
+      [
+        "validate",
+        "Validate JWT"
+      ],
+      [
+        "case",
+        "Get Case Details"
+      ],
+      [
+        "assign",
+        "Assign Attorney"
+      ],
+      [
+        "task",
+        "Create Task"
+      ],
+      [
+        "teams",
+        "Notify Teams"
+      ],
+      [
+        "audit",
+        "Audit"
+      ]
+    ],
+    "callback": true,
+    "serial": 1,
+    "summary": "New case created \u2192 validate, assign attorney, create tasks, notify Teams.",
+    "display_name": "WF-01 \u00b7 Case Intake Automation"
+  },
+  {
+    "file": "business/document-upload-v1.json",
+    "name": "Document Upload Pipeline",
+    "slug": "document-upload-v1",
+    "group": "business",
+    "trigger": "webhook",
+    "tags": [
+      "wf-02"
+    ],
+    "meta": {
+      "purpose": "Flagship E2E flow \u2014 OCR complete \u2192 AI summary \u2192 attorney notification \u2192 approval task.",
+      "domain_event": "DocumentUploaded",
+      "fastapi_trigger": "Celery workflow_tasks.trigger_document_upload_workflow after OCR",
+      "trigger": "POST /webhook/document-upload-v1 (Document Uploaded)",
+      "input": {
+        "documentId": "uuid",
+        "caseId": "uuid",
+        "executionId": "uuid",
+        "firmId": "uuid"
+      },
+      "output": {
+        "status": "completed",
+        "approvalTaskCreated": true
+      },
+      "retries": 3,
+      "failure": "Mark execution failed; notify attorney + admin",
+      "owner": "document-team",
+      "version": 1,
+      "category": "document-processing",
+      "group": "business",
+      "serial": 2,
+      "summary": "Document OCR done \u2192 request AI summary and create attorney approval task."
+    },
+    "steps": [
+      [
+        "ocr",
+        "Wait for OCR"
+      ],
+      [
+        "ai",
+        "Request AI Summary"
+      ],
+      [
+        "notify",
+        "Notify Attorney"
+      ],
+      [
+        "approval",
+        "Create Approval Task"
+      ]
+    ],
+    "callback": true,
+    "enterprise_graph": "document-upload",
+    "serial": 2,
+    "summary": "Document OCR done \u2192 request AI summary and create attorney approval task.",
+    "display_name": "WF-02 \u00b7 Document Upload Pipeline"
+  },
+  {
+    "file": "business/ai-summary-approved-v1.json",
+    "name": "AI Summary Approved",
+    "slug": "ai-summary-approved-v1",
+    "group": "business",
+    "trigger": "webhook",
+    "tags": [
+      "wf-03"
+    ],
+    "meta": {
+      "purpose": "Post-approval \u2014 update case status, notify managing partner, archive summary, audit.",
+      "domain_event": "SummaryApproved",
+      "fastapi_trigger": "ai_service.approve_summary() \u2192 outbox event",
+      "trigger": "POST /webhook/ai-summary-approved-v1",
+      "input": {
+        "summaryId": "uuid",
+        "caseId": "uuid",
+        "approvedBy": "uuid"
+      },
+      "output": {
+        "status": "archived",
+        "partnerNotified": true
+      },
+      "retries": 2,
+      "failure": "Retry then escalate to partner",
+      "owner": "ai-team",
+      "version": 1,
+      "category": "ai-approval",
+      "group": "business",
+      "serial": 3,
+      "summary": "Attorney approves AI draft \u2192 notify partner, archive summary, audit."
+    },
+    "steps": [
+      [
+        "update",
+        "Update Case"
+      ],
+      [
+        "partner",
+        "Notify Managing Partner"
+      ],
+      [
+        "archive",
+        "Archive Summary"
+      ],
+      [
+        "audit",
+        "Audit"
+      ]
+    ],
+    "callback": true,
+    "serial": 3,
+    "summary": "Attorney approves AI draft \u2192 notify partner, archive summary, audit.",
+    "display_name": "WF-03 \u00b7 AI Summary Approved"
+  },
+  {
+    "file": "business/client-created-v1.json",
+    "name": "New Client Onboarding",
+    "slug": "client-created-v1",
+    "group": "business",
+    "trigger": "webhook",
+    "tags": [
+      "wf-04"
+    ],
+    "meta": {
+      "purpose": "CRM sync, welcome email, intake team assignment when a new client is created.",
+      "domain_event": "ClientCreated",
+      "fastapi_trigger": "clients API POST /api/v1/clients \u2192 outbox",
+      "trigger": "POST /webhook/client-created-v1",
+      "input": {
+        "clientId": "uuid",
+        "email": "string",
+        "firmId": "uuid"
+      },
+      "output": {
+        "crmSynced": true,
+        "intakeAssigned": true
+      },
+      "retries": 3,
+      "failure": "Manual intake queue",
+      "owner": "client-success",
+      "version": 1,
+      "category": "case-management",
+      "group": "business",
+      "serial": 4,
+      "summary": "New client added \u2192 CRM sync, welcome email, assign intake team."
+    },
+    "steps": [
+      [
+        "crm",
+        "CRM Sync"
+      ],
+      [
+        "welcome",
+        "Welcome Email"
+      ],
+      [
+        "intake",
+        "Assign Intake Team"
+      ],
+      [
+        "audit",
+        "Audit"
+      ]
+    ],
+    "serial": 4,
+    "summary": "New client added \u2192 CRM sync, welcome email, assign intake team.",
+    "display_name": "WF-04 \u00b7 New Client Onboarding"
+  },
+  {
+    "file": "business/case-closed-v1.json",
+    "name": "Case Closed",
+    "slug": "case-closed-v1",
+    "group": "business",
+    "trigger": "webhook",
+    "tags": [
+      "wf-05"
+    ],
+    "meta": {
+      "purpose": "Archive documents, export PDF, email client, move S3, audit when case closes.",
+      "domain_event": "CaseStatusChanged(closed)",
+      "fastapi_trigger": "cases API PATCH status=closed \u2192 outbox",
+      "trigger": "POST /webhook/case-closed-v1",
+      "input": {
+        "caseId": "uuid",
+        "firmId": "uuid"
+      },
+      "output": {
+        "archived": true,
+        "clientEmailed": true
+      },
+      "retries": 2,
+      "failure": "Manual archive queue",
+      "owner": "case-management",
+      "version": 1,
+      "category": "case-management",
+      "group": "business",
+      "serial": 5,
+      "summary": "Case closed \u2192 archive documents, export PDF, email client, move to cold storage."
+    },
+    "steps": [
+      [
+        "archive",
+        "Archive Docs"
+      ],
+      [
+        "pdf",
+        "Export PDF"
+      ],
+      [
+        "email",
+        "Email Client"
+      ],
+      [
+        "s3",
+        "Move S3"
+      ],
+      [
+        "audit",
+        "Audit"
+      ]
+    ],
+    "serial": 5,
+    "summary": "Case closed \u2192 archive documents, export PDF, email client, move to cold storage.",
+    "display_name": "WF-05 \u00b7 Case Closed"
+  },
+  {
+    "file": "business/ai-failure-recovery-v1.json",
+    "name": "AI Failure Recovery",
+    "slug": "ai-failure-recovery-v1",
+    "group": "business",
+    "trigger": "webhook",
+    "tags": [
+      "wf-06"
+    ],
+    "meta": {
+      "purpose": "Retry failed AI jobs 3\u00d7 then create human review task and notify attorney.",
+      "domain_event": "AIJobFailed",
+      "fastapi_trigger": "ai_tasks failure handler \u2192 workflow execution",
+      "trigger": "POST /webhook/ai-failure-recovery-v1",
+      "input": {
+        "jobId": "uuid",
+        "caseId": "uuid",
+        "documentId": "uuid"
+      },
+      "output": {
+        "recovered": "boolean",
+        "humanReview": "boolean"
+      },
+      "retries": 3,
+      "failure": "Human review task + admin notification",
+      "owner": "ai-team",
+      "version": 1,
+      "category": "ai-approval",
+      "group": "business",
+      "serial": 6,
+      "summary": "AI job failed \u2192 retry 3\u00d7, then create human review and alert attorney."
+    },
+    "steps": [
+      [
+        "r1",
+        "Retry 1"
+      ],
+      [
+        "r2",
+        "Retry 2"
+      ],
+      [
+        "r3",
+        "Retry 3"
+      ],
+      [
+        "review",
+        "Create Human Review"
+      ],
+      [
+        "notify",
+        "Notify Attorney"
+      ]
+    ],
+    "admin_notify_steps": [
+      "Notify Attorney"
+    ],
+    "serial": 6,
+    "summary": "AI job failed \u2192 retry 3\u00d7, then create human review and alert attorney.",
+    "display_name": "WF-06 \u00b7 AI Failure Recovery"
+  },
+  {
+    "file": "notifications/approval-escalation-v1.json",
+    "name": "Approval Escalation",
+    "slug": "approval-escalation-v1",
+    "group": "notifications",
+    "trigger": "schedule",
+    "cron": "0 * * * *",
+    "tags": [
+      "wf-07"
+    ],
+    "meta": {
+      "purpose": "Hourly SLA check \u2014 approvals pending >24h get reminder, then partner escalation.",
+      "domain_event": null,
+      "fastapi_trigger": "n8n schedule only (no FastAPI trigger)",
+      "trigger": "Cron every hour",
+      "input": {},
+      "output": {
+        "escalatedCount": "number",
+        "remindersSent": "number"
+      },
+      "retries": 1,
+      "failure": "Log + infra health-monitor alert",
+      "owner": "operations-team",
+      "version": 1,
+      "category": "notifications",
+      "group": "notifications",
+      "serial": 7,
+      "summary": "Hourly SLA check \u2192 remind attorney; escalate to partner after 24h."
+    },
+    "steps": [
+      [
+        "pending",
+        "Pending Approval"
+      ],
+      [
+        "old",
+        "Older than 24h"
+      ],
+      [
+        "remind",
+        "Reminder"
+      ],
+      [
+        "still",
+        "Still Pending"
+      ],
+      [
+        "escalate",
+        "Escalate to Partner"
+      ]
+    ],
+    "admin_notify_steps": [
+      "Reminder",
+      "Escalate to Partner"
+    ],
+    "serial": 7,
+    "summary": "Hourly SLA check \u2192 remind attorney; escalate to partner after 24h.",
+    "display_name": "WF-07 \u00b7 Approval Escalation"
+  },
+  {
+    "file": "reports/daily-partner-report-v1.json",
+    "name": "Daily Partner Report",
+    "slug": "daily-partner-report-v1",
+    "group": "reports",
+    "trigger": "schedule",
+    "cron": "0 8 * * *",
+    "tags": [
+      "wf-08"
+    ],
+    "meta": {
+      "purpose": "Morning digest \u2014 pending cases, failed AI jobs, workflow errors to partners.",
+      "domain_event": null,
+      "fastapi_trigger": "n8n schedule only",
+      "trigger": "Cron daily 8:00 AM UTC",
+      "input": {},
+      "output": {
+        "reportSent": true,
+        "recipientCount": "number"
+      },
+      "retries": 1,
+      "failure": "Retry once; admin alert",
+      "owner": "operations-team",
+      "version": 1,
+      "category": "reports",
+      "group": "reports",
+      "serial": 8,
+      "summary": "Daily 8am digest \u2192 pending cases, failed AI jobs, workflow errors to partners."
+    },
+    "steps": [
+      [
+        "pending",
+        "Pending Cases"
+      ],
+      [
+        "ai",
+        "Failed AI Jobs"
+      ],
+      [
+        "wf",
+        "Workflow Errors"
+      ],
+      [
+        "email",
+        "Email Partner"
+      ],
+      [
+        "teams",
+        "Teams Notification"
+      ]
+    ],
+    "admin_notify_steps": [
+      "Email Partner",
+      "Teams Notification"
+    ],
+    "serial": 8,
+    "summary": "Daily 8am digest \u2192 pending cases, failed AI jobs, workflow errors to partners.",
+    "display_name": "WF-08 \u00b7 Daily Partner Report"
+  },
+  {
+    "file": "infra/health-monitor-v1.json",
+    "name": "Operations Health Monitor",
+    "slug": "ops-health-monitor-v1",
+    "group": "infra",
+    "trigger": "schedule",
+    "cron": "*/5 * * * *",
+    "tags": [
+      "wf-09"
+    ],
+    "meta": {
+      "purpose": "Every 5 min \u2014 probe Redis, RabbitMQ, Celery, API; create incident + alert admins.",
+      "domain_event": null,
+      "fastapi_trigger": "n8n schedule only",
+      "trigger": "Cron every 5 minutes",
+      "input": {},
+      "output": {
+        "healthy": true,
+        "incidents": []
+      },
+      "retries": 0,
+      "failure": "Self-alert via admin notification",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "infra",
+      "group": "infra",
+      "serial": 9,
+      "summary": "Every 5 min \u2192 probe Redis, RabbitMQ, Celery, API; alert ops on failure."
+    },
+    "steps": [
+      [
+        "check",
+        "Health Check"
+      ],
+      [
+        "redis",
+        "Redis"
+      ],
+      [
+        "rabbit",
+        "RabbitMQ"
+      ],
+      [
+        "celery",
+        "Celery"
+      ],
+      [
+        "api",
+        "API"
+      ],
+      [
+        "incident",
+        "Create Incident"
+      ],
+      [
+        "notify",
+        "Notify Ops"
+      ]
+    ],
+    "admin_notify_steps": [
+      "Create Incident",
+      "Notify Ops"
+    ],
+    "serial": 9,
+    "summary": "Every 5 min \u2192 probe Redis, RabbitMQ, Celery, API; alert ops on failure.",
+    "display_name": "WF-09 \u00b7 Operations Health Monitor"
+  },
+  {
+    "file": "test/smoke-callback-v1.json",
+    "name": "Platform Smoke Callback",
+    "slug": "smoke-callback-v1",
+    "group": "test",
+    "trigger": "manual",
+    "tags": [
+      "wf-10"
+    ],
+    "meta": {
+      "purpose": "CI/local smoke \u2014 verifies n8n can reach FastAPI internal smoke endpoint.",
+      "domain_event": null,
+      "fastapi_trigger": "Manual / scripts/verify/n8n-callback.sh",
+      "trigger": "Manual (CI / verify-n8n-callback)",
+      "input": {},
+      "output": {
+        "status": "ok"
+      },
+      "retries": 0,
+      "failure": "Fail CI gate",
+      "owner": "platform-team",
+      "version": 1,
+      "category": "test",
+      "group": "test",
+      "serial": 10,
+      "summary": "Manual CI smoke \u2192 verify n8n can reach FastAPI internal health endpoint."
+    },
+    "steps": [],
+    "custom": "smoke",
+    "serial": 10,
+    "summary": "Manual CI smoke \u2192 verify n8n can reach FastAPI internal health endpoint.",
+    "display_name": "WF-10 \u00b7 Platform Smoke Callback"
+  }
+]

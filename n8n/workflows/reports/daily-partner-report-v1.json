@@ -1,0 +1,183 @@
+{
+  "name": "WF-08 \u00b7 Daily Partner Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Pending Cases', ok: true } }];"
+      },
+      "id": "pending",
+      "name": "Pending Cases",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Failed AI Jobs', ok: true } }];"
+      },
+      "id": "ai",
+      "name": "Failed AI Jobs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Workflow Errors', ok: true } }];"
+      },
+      "id": "wf",
+      "name": "Workflow Errors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/notifications/admin",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"subject\": \"[LexFlow] WF-08 \\u00b7 Daily Partner Report \\u2014 Email Partner\", \"body\": \"Workflow step completed: Email Partner\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-08 \\u00b7 Daily Partner Report\", \"step\": \"Email Partner\", \"executionId\": \"{{ $execution.id }}\"}}"
+      },
+      "id": "email",
+      "name": "Email Partner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/notifications/admin",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"subject\": \"[LexFlow] WF-08 \\u00b7 Daily Partner Report \\u2014 Teams Notification\", \"body\": \"Workflow step completed: Teams Notification\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-08 \\u00b7 Daily Partner Report\", \"step\": \"Teams Notification\", \"executionId\": \"{{ $execution.id }}\"}}"
+      },
+      "id": "teams",
+      "name": "Teams Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Pending Cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pending Cases": {
+      "main": [
+        [
+          {
+            "node": "Failed AI Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Failed AI Jobs": {
+      "main": [
+        [
+          {
+            "node": "Workflow Errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Errors": {
+      "main": [
+        [
+          {
+            "node": "Email Partner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Partner": {
+      "main": [
+        [
+          {
+            "node": "Teams Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-08"
+    }
+  ],
+  "meta": {
+    "purpose": "Morning digest \u2014 pending cases, failed AI jobs, workflow errors to partners.",
+    "domain_event": null,
+    "fastapi_trigger": "n8n schedule only",
+    "trigger": "Cron daily 8:00 AM UTC",
+    "input": {},
+    "output": {
+      "reportSent": true,
+      "recipientCount": "number"
+    },
+    "retries": 1,
+    "failure": "Retry once; admin alert",
+    "owner": "operations-team",
+    "version": 1,
+    "category": "reports",
+    "group": "reports",
+    "serial": 8,
+    "summary": "Daily 8am digest \u2192 pending cases, failed AI jobs, workflow errors to partners."
+  }
+}

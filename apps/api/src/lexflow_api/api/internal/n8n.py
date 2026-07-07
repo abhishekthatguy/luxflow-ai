@@ -3,7 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.db.session import get_db
 from lexflow_api.schemas.common import Envelope, envelope
+from lexflow_api.schemas.internal_workflows import WorkflowStepPayload
 from lexflow_api.schemas.workflows import N8nCallbackPayload
+from lexflow_api.services.internal_workflow_service import InternalWorkflowService
 from lexflow_api.services.workflow_service import WorkflowService
 
 router = APIRouter(prefix="/internal/webhooks/n8n", tags=["internal-n8n"])
@@ -25,4 +27,21 @@ async def n8n_callback(
         raise HTTPException(status_code=401, detail="Invalid webhook signature.")
     payload = N8nCallbackPayload.model_validate_json(raw)
     await WorkflowService(session).handle_n8n_callback(slug, payload)
+    await session.commit()
     return envelope({"status": "ok", "slug": slug}, _request_id(request))
+
+
+@router.post("/{slug}/step", response_model=Envelope[dict[str, str]])
+async def n8n_step_callback(
+    request: Request,
+    slug: str,
+    session: AsyncSession = Depends(get_db),
+    x_lexflow_signature: str | None = Header(default=None, alias="X-LexFlow-Signature"),
+) -> Envelope[dict[str, str]]:
+    raw = await request.body()
+    if not WorkflowService.verify_hmac(raw, x_lexflow_signature):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature.")
+    payload = WorkflowStepPayload.model_validate_json(raw)
+    await InternalWorkflowService(session).record_step(slug, payload)
+    await session.commit()
+    return envelope({"status": "ok", "slug": slug, "step": payload.step_name}, _request_id(request))

@@ -1,6 +1,7 @@
 # Phase 1 Go-Live Checklist (LEX-513)
 
-Use before production promotion. Full playbook: `docs/14-playbooks/deploy-production.md`.
+Use before production promotion. Full playbook: `docs/14-playbooks/deploy-production.md`.  
+**Complete checklist:** [`PRODUCTION-DEPLOYMENT-CHECKLIST.md`](./PRODUCTION-DEPLOYMENT-CHECKLIST.md)
 
 ## Pre-flight
 

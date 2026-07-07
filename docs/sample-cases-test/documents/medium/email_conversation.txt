@@ -1,0 +1,51 @@
+EMAIL THREAD — PTO DISPUTE | EMP-2026-0007 | Outlook Export
+Sarah Johnson (sarah.johnson@gmail.com) | HR (hr@technova.com)
+
+────────────────────────────────────────────────────────────────────────────
+From: Sarah Johnson <sarah.johnson@gmail.com>
+To: HR Shared Mailbox <hr@technova.com>
+Date: January 22, 2026, 9:14 AM PST
+Subject: PTO Balance Discrepancy — Request for Correction
+
+Hi HR Team,
+
+Workday shows 2.5 days PTO remaining but my records indicate 6 days (9 of 15 used
+in 2025). I submitted PTO for Jan 27–28 for my mother's post-surgery care before
+seeing the incorrect balance. Please confirm and approve the pending request.
+
+Thank you, Sarah Johnson | Senior Product Analyst
+
+────────────────────────────────────────────────────────────────────────────
+From: HR Shared Mailbox <hr@technova.com>
+To: Sarah Johnson <sarah.johnson@gmail.com>
+Date: January 23, 2026, 2:47 PM PST
+Subject: RE: PTO Balance Discrepancy — Request for Correction
+
+Dear Sarah,
+
+Per Section 4.2 of the Employee Handbook, carryover is capped at 5 days. Your
+January 1 balance was 5 days; 2.5 used in January leaves 2.5. Your Jan 27–28
+request (2 days) exceeds balance by 0.5 day. Cancel 0.5 day or take unpaid leave.
+
+Regards, Jennifer Walsh, HR Generalist
+
+────────────────────────────────────────────────────────────────────────────
+From: Sarah Johnson <sarah.johnson@gmail.com>
+To: HR Shared Mailbox; Michael Torres <mtorres@technova.com>
+Date: January 24, 2026, 8:03 AM PST
+Subject: RE: PTO Balance Discrepancy — Request for Correction
+
+I was never notified of a 5-day carryover cap. My offer stated 15 days annually.
+I relied on that when scheduling care. Please escalate — this feels retaliatory
+given my recent PIP meeting. Sarah Johnson
+
+────────────────────────────────────────────────────────────────────────────
+From: Michael Torres <mtorres@technova.com>
+To: Sarah Johnson <sarah.johnson@gmail.com>
+Date: January 27, 2026, 4:22 PM PST
+Subject: RE: PTO Balance Discrepancy — Final Determination
+
+Sarah, the carryover policy is in the 2024 Handbook you acknowledged at hire.
+Jan 27–28 PTO is denied. Focus on PIP deliverables due February 14.
+
+Michael Torres, VP Human Resources

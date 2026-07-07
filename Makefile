@@ -1,8 +1,10 @@
 .PHONY: setup dev dev-full down ps logs lint test migrate migrate-down seed \
+        seed-rbac-enterprise seed-sprint4 seed-sprint5 seed-notification-users \
         verify-quickstart verify-platform verify-health verify-logging \
         verify-traces verify-redis verify-rabbitmq verify-celery \
         verify-n8n-callback verify-minio verify-integration verify-sprint3 \
-        verify-sprint4 verify-sprint5 test-e2e n8n-import
+        verify-sprint4 verify-sprint5 verify-notifications test-e2e n8n-import n8n-build seed-workflows seed-simple-case seed-abhishek-case seed-demo-data \
+        seed-notification-users qa-simple-case qa-medium-case qa-complex-case qa-abhishek-case qa-all-cases phase1-pull-models cleanup-operations
 
 LEXFLOW_ENV ?= local
 export LEXFLOW_ENV
@@ -37,11 +39,67 @@ seed:
 seed-sprint4:
 	docker compose exec api python scripts/seed_sprint4.py
 
+seed-workflows:
+	docker compose exec api python scripts/seed_workflows.py
+
+n8n-build:
+	python3 scripts/n8n/build_workflows.py
+
+n8n-docs:
+	python3 scripts/n8n/generate_workflow_docs.py
+
 seed-sprint5:
 	docker compose exec api python scripts/seed_sprint5.py
 
+seed-notification-users:
+	docker compose exec api python scripts/seed_notification_users.py
+
+seed-rbac-enterprise:
+	docker compose exec api python scripts/seed_rbac_enterprise.py
+
+verify-notifications:
+	@chmod +x scripts/verify/notifications.sh
+	@./scripts/verify/notifications.sh
+
+seed-simple-case:
+	docker compose exec api python scripts/seed_simple_case.py
+
+seed-abhishek-case:
+	docker compose exec api python scripts/seed_abhishek_case.py
+	cd apps/api && python3 -m venv .venv 2>/dev/null; cd apps/api && . .venv/bin/activate && pip install -q pymupdf && python3 scripts/generate_abhishek_sample_docs.py
+	$(MAKE) seed-workflows
+
+seed-demo-data:
+	docker compose exec api python scripts/seed_demo_data.py
+
+qa-simple-case:
+	cd apps/api/scripts && python3 qa_simple_case.py
+
+qa-medium-case:
+	cd apps/api/scripts && python3 qa_medium_case.py
+
+qa-complex-case:
+	cd apps/api/scripts && python3 qa_complex_case.py
+
+qa-abhishek-case:
+	cd apps/api/scripts && python3 qa_abhishek_pdf_case.py
+
+qa-all-cases:
+	cd apps/api/scripts && python3 qa_all_cases.py
+
+phase1-pull-models:
+	docker compose exec ollama ollama pull qwen2.5:latest
+	docker compose exec ollama ollama pull nomic-embed-text
+
 n8n-import:
-	python3 scripts/n8n/import-workflows.py
+	chmod +x scripts/n8n/init-local.sh
+	./scripts/n8n/init-local.sh
+
+n8n-purge:
+	python3 scripts/n8n/purge_managed_workflows.py
+
+cleanup-operations:
+	docker compose exec api python scripts/cleanup_stale_operations.py
 
 lint:
 	cd apps/api && python3 -m venv .venv && . .venv/bin/activate && pip install -q -e ".[dev]" && ruff check src tests && mypy src

@@ -153,8 +153,17 @@ class DocumentService:
             self._session,
             case_id=document.case_id,
             firm_id=user.firm_id,
+            event_type="document.virus_scan.passed",
+            title=f"Virus scan passed: {document.title}",
+            payload={"documentId": str(document.id)},
+            actor_id=user.id,
+        )
+        await write_timeline_event(
+            self._session,
+            case_id=document.case_id,
+            firm_id=user.firm_id,
             event_type="document.uploaded",
-            title=f"Document uploaded: {document.title}",
+            title=f"{document.title} uploaded",
             payload={"documentId": str(document.id)},
             actor_id=user.id,
         )
@@ -167,15 +176,24 @@ class DocumentService:
             resource_id=document.id,
             details={"caseId": str(document.case_id), "title": document.title},
         )
-        from lexflow_api.services.notification_service import NotificationService
+        from lexflow_api.domain.notification_events import NotificationEventType
+        from lexflow_api.services.notifications.helpers import emit_case_notification
 
-        await NotificationService(self._session).create_in_app(
-            user_id=user.id,
+        await emit_case_notification(
+            self._session,
+            event_type=NotificationEventType.DOCUMENT_UPLOADED,
             firm_id=user.firm_id,
             case_id=document.case_id,
             title="Document uploaded",
-            body=f"{document.title} is ready for processing.",
-            metadata={"documentId": str(document.id), "caseId": str(document.case_id)},
+            description=f"{document.title} is ready for processing.",
+            status_badge="Processing",
+            actor_id=user.id,
+            recipient_user_ids={user.id},
+            context={
+                "document_title": document.title,
+                "current_stage": "Uploaded",
+                "recent_activity": [f"{document.title} uploaded"],
+            },
         )
 
         from lexflow_api.tasks.document_tasks import process_document_ocr
@@ -224,6 +242,43 @@ class DocumentService:
             resource_id=document.id,
         )
         return DocumentDownloadResponse(download_url=url, expires_at=expires_at)
+
+    async def get_document_content(
+        self, user: CurrentUser, document_id: UUID
+    ) -> tuple[bytes, str, str]:
+        """Return raw bytes, mime type, and filename for inline preview."""
+        document = await self._get_accessible_document(user, document_id)
+        if document.status == DocumentStatus.PENDING_UPLOAD:
+            raise ConflictError("Document upload not yet confirmed.")
+        content = self._s3.get_object(document.s3_key)
+        filename = document.s3_key.rsplit("/", 1)[-1]
+        await write_audit_log(
+            self._session,
+            firm_id=user.firm_id,
+            actor_id=user.id,
+            action="document.preview",
+            resource_type="document",
+            resource_id=document.id,
+        )
+        return content, document.mime_type, filename
+
+    async def retry_ocr(self, user: CurrentUser, document_id: UUID) -> DocumentResponse:
+        document = await self._get_accessible_document(user, document_id)
+        if document.status == DocumentStatus.PENDING_UPLOAD:
+            raise ConflictError("Confirm the upload before retrying OCR.")
+        if document.ocr_status in (OcrStatus.COMPLETED, OcrStatus.SKIPPED) and document.status == DocumentStatus.READY:
+            raise ConflictError("OCR already completed for this document.")
+
+        document.status = DocumentStatus.UPLOADED
+        document.ocr_status = OcrStatus.PENDING
+        document.ocr_text = None
+        document.updated_at = datetime.now(UTC)
+        await self._session.commit()
+
+        from lexflow_api.tasks.document_tasks import process_document_ocr
+
+        process_document_ocr.delay(str(document.id))
+        return self.to_response(document)
 
     async def _get_accessible_document(self, user: CurrentUser, document_id: UUID) -> Document:
         result = await self._session.execute(

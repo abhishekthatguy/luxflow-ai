@@ -6,6 +6,18 @@ import { useCallback, useEffect, useState } from "react";
 
 import { apiFetch, apiFetchList } from "@/lib/auth";
 
+const PRIORITY_STYLES: Record<string, string> = {
+  urgent: "bg-red-100 text-red-800",
+  high: "bg-orange-100 text-orange-800",
+  critical: "bg-red-100 text-red-800",
+  normal: "bg-slate-100 text-slate-700",
+};
+
+function formatRolePriority(priority?: string | null): string {
+  if (!priority) return "Normal";
+  return priority.charAt(0).toUpperCase() + priority.slice(1);
+}
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(0);
@@ -22,7 +34,7 @@ export function NotificationBell() {
 
   const loadItems = useCallback(async () => {
     const { items: list } = await apiFetchList<NotificationItem>(
-      "/api/v1/notifications?pageSize=10&unreadOnly=true",
+      "/api/v1/notifications?pageSize=15&unreadOnly=true",
     );
     setItems(list);
   }, []);
@@ -59,24 +71,40 @@ export function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 z-40 mt-1 w-80 rounded-md border bg-white shadow-lg">
-          <div className="border-b px-3 py-2 text-xs font-medium text-slate-500">Notifications</div>
+        <div className="absolute right-0 z-40 mt-1 w-96 rounded-md border bg-white shadow-lg">
+          <div className="border-b px-3 py-2 text-xs font-medium text-slate-500">
+            Notification Center
+          </div>
           {items.length === 0 ? (
             <p className="px-3 py-4 text-sm text-slate-500">No unread notifications</p>
           ) : (
-            <ul className="max-h-72 overflow-y-auto">
+            <ul className="max-h-96 overflow-y-auto">
               {items.map((n) => (
-                <li key={n.id} className="border-b border-slate-100 px-3 py-2 text-sm">
-                  <p className="font-medium">{n.title}</p>
-                  <p className="text-slate-600">{n.body}</p>
-                  <div className="mt-1 flex gap-2">
-                    {n.caseId && (
+                <li key={n.id} className="border-b border-slate-100 px-3 py-3 text-sm">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-slate-900">{n.title}</p>
+                    {n.priority && (
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${PRIORITY_STYLES[n.priority] ?? PRIORITY_STYLES.normal}`}
+                      >
+                        {formatRolePriority(n.priority)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-slate-600">{n.description ?? n.body}</p>
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                    {n.workflowSlug && <span className="font-mono">{n.workflowSlug}</span>}
+                    {n.eventType && <span>{n.eventType}</span>}
+                    <span>{new Date(n.createdAt).toLocaleString()}</span>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    {(n.actionUrl || n.caseId) && (
                       <Link
-                        href={`/cases/${n.caseId}/overview`}
-                        className="text-xs text-blue-700 hover:underline"
+                        href={n.actionUrl || `/cases/${n.caseId}/overview`}
+                        className="text-xs font-medium text-blue-700 hover:underline"
                         onClick={() => setOpen(false)}
                       >
-                        View case
+                        Open case
                       </Link>
                     )}
                     <button

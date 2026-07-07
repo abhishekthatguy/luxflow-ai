@@ -11,6 +11,7 @@ from lexflow_api.auth.password import verify_password
 from lexflow_api.config import settings
 from lexflow_api.exceptions import UnauthorizedError, ValidationAppError
 from lexflow_api.models.identity import RefreshToken, User
+from lexflow_api.auth.permissions import permissions_for_roles
 from lexflow_api.schemas.auth import TokenResponse, UserResponse
 
 
@@ -92,14 +93,17 @@ class AuthService:
     @staticmethod
     def to_user_response(user: User | CurrentUser) -> UserResponse:
         if isinstance(user, CurrentUser):
+            role_set = user.roles
             return UserResponse(
                 id=user.id,
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
                 firm_id=user.firm_id,
-                roles=sorted(user.roles),
+                roles=sorted(role_set),
+                permissions=permissions_for_roles(role_set),
             )
+        role_set = {role.name for role in user.roles}
         return UserResponse(
             id=user.id,
             email=user.email,
@@ -107,7 +111,8 @@ class AuthService:
             last_name=user.last_name,
             title=user.title,
             firm_id=user.firm_id,
-            roles=sorted(role.name for role in user.roles),
+            roles=sorted(role_set),
+            permissions=permissions_for_roles(role_set),
             last_login_at=user.last_login_at,
         )
 

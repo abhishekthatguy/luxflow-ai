@@ -1,6 +1,6 @@
 "use client";
 
-import type { CaseSummary, TimelineEvent } from "@lexflow/shared";
+import { PRACTICE_AREAS, type CaseSummary, type TimelineEvent } from "@lexflow/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -44,6 +44,11 @@ export default function CaseOverviewPage() {
     );
   }
 
+  const practiceAreaLabel =
+    PRACTICE_AREAS.find((a) => a.value === caseData.practiceArea)?.label ??
+    caseData.practiceArea ??
+    "—";
+
   return (
     <DashboardShell>
       <div className="flex items-start justify-between gap-4">
@@ -66,7 +71,7 @@ export default function CaseOverviewPage() {
         </div>
         <div className="rounded-lg border border-slate-200 p-4">
           <p className="text-xs uppercase text-slate-500">Practice area</p>
-          <p className="mt-1 text-lg">{caseData.practiceArea ?? "—"}</p>
+          <p className="mt-1 text-lg">{practiceAreaLabel}</p>
         </div>
         <div className="rounded-lg border border-slate-200 p-4">
           <p className="text-xs uppercase text-slate-500">Version</p>

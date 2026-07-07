@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser
-from lexflow_api.auth.rbac import FIRM_WIDE_ACCESS_ROLES, has_any_role
+from lexflow_api.auth.permissions import PERM_VIEW_AUDIT, has_permission
 from lexflow_api.exceptions import ForbiddenError
 from lexflow_api.models.audit import AuditLog
 from lexflow_api.schemas.audit import AuditLogResponse
@@ -16,8 +16,8 @@ class AuditQueryService:
         self._session = session
 
     def _require_audit_access(self, user: CurrentUser) -> None:
-        if not has_any_role(user.roles, FIRM_WIDE_ACCESS_ROLES):
-            raise ForbiddenError("Audit log access requires ManagingPartner or SystemAdministrator role.")
+        if not has_permission(user.roles, PERM_VIEW_AUDIT):
+            raise ForbiddenError("Your role is not permitted to view audit logs.")
 
     async def list_logs(
         self,

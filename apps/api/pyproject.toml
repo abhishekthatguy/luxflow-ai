@@ -24,10 +24,18 @@ dependencies = [
     "bcrypt>=4.2.0",
     "python-multipart>=0.0.12",
     "email-validator>=2.2.0",
-    "pypdf>=5.1.0",
+    "jinja2>=3.1.0",
+    "pymupdf>=1.24.0",
+    "pgvector>=0.3.6",
 ]
 
 [project.optional-dependencies]
+ocr = [
+    "paddlepaddle>=2.6.0",
+    "paddleocr>=2.9.0",
+    "pillow>=10.0.0",
+    "numpy>=1.26.0",
+]
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
@@ -62,7 +70,7 @@ strict = true
 packages = ["lexflow_api"]
 
 [[tool.mypy.overrides]]
-module = ["boto3", "botocore.*", "pika", "celery.*", "passlib.*", "jwt", "bcrypt"]
+module = ["boto3", "botocore.*", "pika", "celery.*", "passlib.*", "jwt", "bcrypt", "fitz", "pgvector", "paddleocr", "PIL", "numpy"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

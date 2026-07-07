@@ -28,6 +28,16 @@ export interface UserProfile {
   lastName: string;
   firmId: string;
   roles: string[];
+  permissions: string[];
+}
+
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  status: string;
+  roles: string[];
 }
 
 export interface ClientSummary {
@@ -101,10 +111,13 @@ export interface AISummary {
 export interface WorkflowExecution {
   id: string;
   caseId?: string | null;
+  workflowSlug?: string | null;
+  workflowName?: string | null;
   status: string;
   correlationId: string;
   startedAt?: string | null;
   completedAt?: string | null;
+  errorMessage?: string | null;
   createdAt: string;
 }
 
@@ -127,9 +140,15 @@ export interface NotificationItem {
   channel: string;
   title: string;
   body: string;
+  description?: string | null;
   status: string;
   readAt?: string | null;
   sentAt?: string | null;
+  eventType?: string | null;
+  workflowSlug?: string | null;
+  priority?: string | null;
+  actionUrl?: string | null;
+  correlationId?: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
 }
@@ -137,3 +156,19 @@ export interface NotificationItem {
 export function isApiHealthy(response: ApiHealthResponse): boolean {
   return response.status === "ok" && response.service === "api";
 }
+
+/** Supported case practice areas — keep in sync with API domain/practice_areas.py */
+export const PRACTICE_AREAS = [
+  { value: "litigation", label: "Litigation" },
+  { value: "corporate", label: "Corporate & Transactional" },
+  { value: "ip", label: "Intellectual Property" },
+  { value: "regulatory", label: "Regulatory & Compliance" },
+  { value: "employment", label: "Employment & Labor" },
+  { value: "real_estate", label: "Real Estate" },
+  { value: "family", label: "Family Law" },
+  { value: "immigration", label: "Immigration" },
+  { value: "criminal", label: "Criminal Defense" },
+  { value: "other", label: "Other" },
+] as const;
+
+export type PracticeAreaValue = (typeof PRACTICE_AREAS)[number]["value"];

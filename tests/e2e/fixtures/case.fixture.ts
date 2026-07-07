@@ -20,10 +20,9 @@ export const test = base.extend<AuthFixtures>({
   createCase: async ({ page, loginAsJane }, use) => {
     const createCase = async (title = "E2E Sprint 4 Case") => {
       await loginAsJane();
-      const caseNumber = `e2e-${Date.now()}`;
       await page.goto("/cases/new");
-      await page.getByLabel("Case number").fill(caseNumber);
-      await page.getByLabel("Title").fill(title);
+      await page.getByTestId("case-title-input").fill(title);
+      await page.getByTestId("case-practice-area-select").selectOption("litigation");
       await page.getByRole("button", { name: "Create case" }).click();
       await expect(page).toHaveURL(/\/cases\/[0-9a-f-]+\/overview$/);
       const match = page.url().match(/\/cases\/([0-9a-f-]+)/);

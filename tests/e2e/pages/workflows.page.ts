@@ -13,7 +13,7 @@ export class WorkflowsPage {
   }
 
   triggerButton() {
-    return this.page.getByRole("button", { name: /Trigger document-upload-notify-v1/i });
+    return this.page.getByRole("button", { name: /Trigger Document Upload Pipeline/i });
   }
 
   async triggerDocumentNotify() {

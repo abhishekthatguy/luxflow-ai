@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser
 from lexflow_api.exceptions import ConflictError, NotFoundError
-from lexflow_api.models.cases import Case, Client
+from lexflow_api.models.cases import Case, Client, ClientType
 from lexflow_api.schemas.clients import ClientCreate, ClientResponse, ClientUpdate
 from lexflow_api.services.audit import write_audit_log
 
@@ -90,16 +90,20 @@ class ClientService:
         if data.version is not None and data.version != client.version:
             raise ConflictError("Client version mismatch.")
 
-        if data.name is not None:
-            client.name = data.name
-        if data.type is not None:
-            client.type = data.type.value
-        if data.email is not None:
-            client.email = data.email
-        if data.phone is not None:
-            client.phone = data.phone
-        if data.metadata is not None:
-            client.metadata_ = data.metadata
+        updates = data.model_dump(exclude_unset=True)
+        updates.pop("version", None)
+
+        if "name" in updates and updates["name"] is not None:
+            client.name = updates["name"]
+        if "type" in updates:
+            raw_type = updates["type"]
+            client.type = raw_type.value if isinstance(raw_type, ClientType) else str(raw_type)
+        if "email" in updates:
+            client.email = updates["email"]
+        if "phone" in updates:
+            client.phone = updates["phone"]
+        if "metadata" in updates and updates["metadata"] is not None:
+            client.metadata_ = updates["metadata"]
 
         client.version += 1
         client.updated_at = datetime.now(UTC)

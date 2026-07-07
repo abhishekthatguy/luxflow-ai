@@ -1,0 +1,27 @@
+ATLANTA POLICE DEPARTMENT — MOTOR VEHICLE ACCIDENT REPORT
+Report Number: APD-2026-031542
+Date of Incident: March 15, 2026
+Time: 14:32 EST
+Location: Peachtree Street NE & 10th Street NE, Atlanta, GA 30309
+
+VEHICLE 1
+Driver: John Doe
+DOB: 05/12/1985
+Address: 142 Oak Lane, Atlanta, GA 30308
+Vehicle: 2020 Toyota Camry (Silver)
+License Plate: GA ABC1234
+Insurance: StateFarm Mutual, Policy POL-8844221
+
+VEHICLE 2
+Driver: Unknown (left scene)
+Vehicle: 2019 Honda Civic (Dark Blue)
+License Plate: Unknown
+
+NARRATIVE
+Vehicle 2 failed to stop at red light and struck Vehicle 1 in the driver's side door.
+John Doe reported neck pain and lower back pain at scene. EMS transported to Atlanta Medical Center.
+Witness: Maria Chen, (404) 555-0199.
+
+OFFICER
+Officer James Martinez, Badge #4421
+Atlery: Reckless driving by Vehicle 2; failure to yield.

@@ -1,0 +1,25 @@
+{% macro workflow_email(headline, intro) %}
+{% extends "base.html" %}
+{% block title %}[LexFlow] {{ status_badge|default('Update') }} — {{ case_title|default('Case') }}{% endblock %}
+{% block content %}
+<h1 style="margin:0 0 8px;font-size:20px;color:#0f172a;">{{ headline }}</h1>
+<p style="margin:0 0 24px;font-size:14px;color:#475569;">{{ intro }}</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:24px;">
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;width:140px;">Case</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;font-weight:600;">{{ case_title|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Client</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ client_name|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Attorney</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ attorney_name|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Workflow</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ workflow_name|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;color:#64748b;">Current Stage</td><td style="padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:14px;color:#0f172a;">{{ current_stage|default('—') }}</td></tr>
+  <tr><td style="padding:8px 0;font-size:13px;color:#64748b;">Time</td><td style="padding:8px 0;font-size:14px;color:#0f172a;">{{ timestamp|default('—') }}</td></tr>
+</table>
+{% if recent_activity %}
+<h2 style="margin:0 0 12px;font-size:14px;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;">Recent Activity</h2>
+<ul style="margin:0 0 24px;padding-left:20px;color:#475569;font-size:14px;line-height:1.8;">
+  {% for item in recent_activity %}<li>{{ item }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% if case_url %}
+<a href="{{ case_url }}" style="display:inline-block;padding:12px 24px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;">Open Case</a>
+{% endif %}
+{% endblock %}
+{% endmacro %}

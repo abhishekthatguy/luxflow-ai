@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { DashboardShell } from "@/components/dashboard-shell";
-import { apiFetchList } from "@/lib/auth";
+import { apiFetchList, useAuth } from "@/lib/auth";
+import { canCreateCase } from "@/lib/permissions";
 
 export default function CasesPage() {
+  const { user } = useAuth();
   const [cases, setCases] = useState<CaseSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const showNewCase = canCreateCase(user?.permissions);
 
   useEffect(() => {
     apiFetchList<CaseSummary>("/api/v1/cases")
@@ -21,12 +24,14 @@ export default function CasesPage() {
     <DashboardShell>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Cases</h1>
-        <Link
-          href="/cases/new"
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-        >
-          New case
-        </Link>
+        {showNewCase && (
+          <Link
+            href="/cases/new"
+            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+          >
+            New case
+          </Link>
+        )}
       </div>
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
       {cases.length === 0 && !error ? (

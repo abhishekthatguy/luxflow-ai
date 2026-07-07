@@ -1,0 +1,4 @@
+# LexFlow admin notification recipients (one email per line)
+# Lines starting with # are ignored.
+# Override via .env: ADMIN_NOTIFICATION_EMAILS=you@example.com,other@example.com
+abhishekthatguy@gmail.com

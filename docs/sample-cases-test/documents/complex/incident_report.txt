@@ -1,0 +1,56 @@
+ACME CORPORATION — INFORMATION SECURITY INCIDENT REPORT
+Report ID: ACME-IR-2026-0312
+Case Reference: CYB-2026-0045
+Classification: CONFIDENTIAL — ATTORNEY-CLIENT PRIVILEGED (PENDING)
+Prepared By: Marcus Chen, CISO
+Date: March 14, 2026
+
+EXECUTIVE SUMMARY
+On March 12, 2026, Acme Corporation detected unauthorized encryption activity across production
+file servers and customer database replicas. Forensic analysis confirmed a LockBit 3.0 ransomware
+variant. Attackers exfiltrated approximately 847 customer records before deploying encryption.
+Operations were partially restored by March 14, 2026. Outside counsel (FMG) engaged same day.
+
+INCIDENT TIMELINE
+March 10, 2026  02:14 UTC  — Initial VPN authentication from IP 185.220.101.44 (Tor exit node)
+March 10, 2026  02:31 UTC  — Lateral movement to ACME-FS-PROD-03 via compromised service account
+March 11, 2026  11:47 UTC  — Bulk query against CRM database (customer_pii table)
+March 12, 2026  06:02 UTC  — Ransom note deployed (readme-lockbit.txt) on 14 hosts
+March 12, 2026  08:19 UTC  — SOC alert triggered; incident response team activated
+March 12, 2026  14:00 UTC  — FMG notified; preservation hold issued on affected systems
+March 13, 2026  09:30 UTC  — Decryption keys obtained via cyber insurance panel vendor
+March 14, 2026  16:45 UTC  — Core CRM and billing systems restored from clean backups
+
+AFFECTED SYSTEMS
+- ACME-FS-PROD-03, ACME-FS-PROD-07 (file servers)
+- ACME-CRM-DB-01 (PostgreSQL — customer records)
+- ACME-BACKUP-02 (backup server — partial compromise)
+- 847 endpoints with encrypted local caches (sales laptops)
+
+DATA EXPOSURE — PII INVENTORY
+Confirmed exfiltration of 847 customer records containing:
+  - Full names, mailing addresses, email addresses
+  - Last four digits of payment card numbers (tokenized vault breach)
+  - Account numbers and subscription tier data
+  - 23 records included Social Security numbers (legacy migration data)
+
+No employee HR records confirmed exfiltrated at time of report.
+
+IMMEDIATE ACTIONS TAKEN
+1. Isolated affected VLAN segments; revoked all VPN sessions
+2. Reset credentials for 412 privileged and service accounts
+3. Engaged CrowdStrike IR retainer and FMG for regulatory guidance
+4. Preserved firewall, VPN, and Active Directory logs for forensic review
+5. Notified cyber insurance carrier (CyberGuard Policy CYB-ACME-2024-9912)
+
+REGULATORY NOTIFICATION STATUS
+- State AG notifications: Under review (CA, NY, TX thresholds triggered)
+- FTC/HHS: Not applicable (no PHI confirmed)
+- SEC disclosure: Pending board review (materiality assessment underway)
+
+RISK ASSESSMENT
+Overall Risk Level: CRITICAL
+Business impact: $1.2M estimated downtime; reputational exposure significant.
+Recommended next steps: Complete forensic report, customer notification plan, MFA rollout.
+
+Report approved by: Marcus Chen, CISO | Jennifer Walsh, General Counsel

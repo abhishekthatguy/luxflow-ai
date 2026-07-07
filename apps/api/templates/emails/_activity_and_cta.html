@@ -1,0 +1,9 @@
+{% if recent_activity %}
+<h2 style="margin:0 0 12px;font-size:14px;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;">Recent Activity</h2>
+<ul style="margin:0 0 24px;padding-left:20px;color:#475569;font-size:14px;line-height:1.8;">
+  {% for item in recent_activity %}<li>{{ item }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% if case_url %}
+<a href="{{ case_url }}" style="display:inline-block;padding:12px 24px;background-color:#0f172a;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:600;">Open Case</a>
+{% endif %}

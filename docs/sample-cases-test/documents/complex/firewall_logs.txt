@@ -1,0 +1,36 @@
+ACME CORPORATION — PALO ALTO NETWORKS FIREWALL LOG EXTRACT
+Device: PA-5220-EDGE-01 | Log Period: March 9–13, 2026
+Export Request: FMG Preservation Order PO-2026-0312
+Format: CSV-equivalent text export | Total Events: 2,847,391 (sample below)
+
+================================================================================
+TIMESTAMP (UTC)       | SRC IP            | DST IP            | ACTION | DETAILS
+================================================================================
+
+2026-03-10 02:14:33   | 185.220.101.44    | 10.0.1.15 (VPN)   | ALLOW  | GlobalProtect auth success; user: jmartinez_svc (service account)
+2026-03-10 02:14:41   | 185.220.101.44    | 10.0.1.15 (VPN)   | ALLOW  | Session established; geo: Romania (unusual for account)
+2026-03-10 02:31:08   | 10.0.1.15 (VPN)   | 10.0.4.22 (FS-03) | ALLOW  | SMB port 445; 847 MB transferred outbound
+2026-03-10 03:02:17   | 10.0.1.15 (VPN)   | 10.0.4.22 (FS-03)   | ALLOW  | RDP port 3389; sustained connection 4h 12m
+2026-03-10 14:22:55   | 45.142.212.89     | 10.0.1.15 (VPN)   | DENY   | Brute force attempt; 847 failed auth in 12 min; IP blocked
+2026-03-11 08:45:00   | 10.0.4.22 (FS-03) | 10.0.6.10 (CRM-DB) | ALLOW | PostgreSQL 5432; SELECT queries; 2.3 GB egress
+2026-03-11 11:47:22   | 10.0.4.22 (FS-03) | 10.0.6.10 (CRM-DB) | ALLOW | Bulk export detected; table: customer_pii
+2026-03-11 14:03:11   | 10.0.4.22 (FS-03) | 194.36.190.45     | ALLOW  | HTTPS 443; 1.8 GB upload to unknown external host
+2026-03-11 14:03:11   | ALERT             | THREAT-ID: exfil   | ALERT  | WildFire: Large outbound transfer to Tor-adjacent IP
+2026-03-11 22:18:33   | 10.0.4.22 (FS-03) | 185.220.101.44    | ALLOW  | C2 beacon pattern; 60-second interval heartbeat
+2026-03-12 05:58:44   | 10.0.4.22 (FS-03) | 10.0.6.10 (CRM-DB) | ALLOW | DROP TABLE attempt blocked by DB firewall rule
+2026-03-12 06:02:01   | INTERNAL          | MULTIPLE HOSTS    | ALERT  | Mass file rename activity (.lockbit extension)
+2026-03-12 06:15:00   | 10.0.4.22 (FS-03) | 194.36.190.45     | DENY   | Blocked post-incident; IP added to threat feed
+2026-03-12 08:19:44   | SOC-ANALYST       | 10.0.4.22 (FS-03)  | DENY   | Emergency isolation rule applied; VLAN quarantine
+
+DATA EXFILTRATION SUMMARY (CONFIRMED BY NETFLOW CORRELATION)
+External destination 194.36.190.45 (AS20473, Choopa/Vultr): 2.1 GB total outbound
+External destination 185.220.101.44 (Tor exit): 340 MB command-and-control traffic
+Estimated customer records in exfiltrated CRM dump: 847 (matches forensic hash analysis)
+
+INDICATORS OF COMPROMISE (IOCs) — EXTRACTED FROM LOGS
+IP: 185.220.101.44, 45.142.212.89, 194.36.190.45
+Domain: sync-update-acme[.]com (DGA variant, blocked March 12)
+File hash (ransom note): SHA256 a7f3c891e2b04d5f8c6e1a9b3d7f2e4c8a1b5d9e3f7c2a8b4d6e0f1a3c5e7b9
+User account: jmartinez_svc (compromised; disabled March 12, 08:20 UTC)
+
+Log integrity: SHA256 chain-of-custody verified by CrowdStrike | Custodian: Marcus Chen, CISO

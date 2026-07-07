@@ -4,8 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from lexflow_api.api.internal.notifications import router as internal_notifications_router
 from lexflow_api.api.internal.n8n import router as internal_n8n_router
 from lexflow_api.api.internal.platform import router as internal_platform_router
+from lexflow_api.api.internal.workflows import router as internal_workflows_router
 from lexflow_api.api.v1.router import v1_router
 from lexflow_api.config import settings
 from lexflow_api.exceptions import AppError, ProblemDetail, problem_from_error
@@ -100,6 +102,8 @@ def create_app() -> FastAPI:
     app.add_middleware(CorrelationIdMiddleware)
     register_exception_handlers(app)
     app.include_router(internal_platform_router)
+    app.include_router(internal_notifications_router)
+    app.include_router(internal_workflows_router)
     app.include_router(internal_n8n_router)
     app.include_router(v1_router)
     instrument_fastapi(app)

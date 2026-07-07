@@ -45,6 +45,17 @@ class JobService:
             raise NotFoundError("Job not found.")
         return self.to_response(job)
 
+    async def find_for_resource(
+        self, resource_type: str, resource_id: UUID
+    ) -> AsyncJob | None:
+        result = await self._session.execute(
+            select(AsyncJob).where(
+                AsyncJob.resource_type == resource_type,
+                AsyncJob.resource_id == resource_id,
+            ).order_by(AsyncJob.created_at.desc()).limit(1)
+        )
+        return result.scalar_one_or_none()
+
     async def create_job(
         self,
         *,

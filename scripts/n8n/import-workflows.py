@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from urllib import error, request
 
-DEFAULT_BASE = os.environ.get("N8N_BASE_URL", "http://localhost:5678")
+DEFAULT_BASE = os.environ.get("N8N_BASE_URL", "http://localhost:5679")
 DEFAULT_KEY = os.environ.get("N8N_API_KEY", "")
 
 

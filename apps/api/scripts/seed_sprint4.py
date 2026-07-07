@@ -13,18 +13,27 @@ from sqlalchemy import select
 from lexflow_api.db.session import async_session_factory
 from lexflow_api.models.ai import PromptTemplate
 from lexflow_api.models.identity import Firm
-from lexflow_api.models.workflows import TriggerType, WorkflowDefinition
+from lexflow_api.models.workflows import WorkflowDefinition
 
-DOCUMENT_SUMMARY_TEMPLATE = """You are a legal research assistant.
+DOCUMENT_SUMMARY_TEMPLATE = """You are a legal assistant preparing an attorney-review draft.
 
-Summarize the following case materials for attorney review.
+Summarize ONLY from the case materials below. Use exact names, dates, locations, and amounts from the documents — do not invent facts or reuse generic examples.
 
 Case: {{ case_title }}
 
 Materials:
 {{ context }}
 
-Provide a concise summary with key facts, issues, and recommended next steps.
+Write a markdown summary with these sections (omit a section only if the documents contain no relevant information):
+
+### Incident Overview
+### People Involved
+### Injuries & Medical
+### Insurance & Claim
+### Potential Liability
+### Recommended Next Actions
+
+End with: _Attorney review required before sharing with the team or client._
 """
 
 async def seed_sprint4() -> None:
@@ -49,8 +58,8 @@ async def seed_sprint4() -> None:
                     version=1,
                     template=DOCUMENT_SUMMARY_TEMPLATE,
                     llm_config={
-                        "provider": "stub",
-                        "model": "stub-gpt-4o",
+                        "provider": "ollama",
+                        "model": "qwen2.5:latest",
                         "temperature": 0.3,
                         "max_tokens": 4096,
                     },
@@ -59,27 +68,26 @@ async def seed_sprint4() -> None:
                 )
             )
             print("OK  Seeded prompt template document-summary-v1")
+        else:
+            existing_template.template = DOCUMENT_SUMMARY_TEMPLATE
+            existing_template.llm_config = {
+                "provider": "ollama",
+                "model": "qwen2.5:latest",
+                "temperature": 0.3,
+                "max_tokens": 4096,
+            }
+            existing_template.version = max(existing_template.version, 2)
+            print("OK  Updated prompt template document-summary-v1 (ollama + structured prompt)")
 
         existing_wf = (
             await session.execute(
                 select(WorkflowDefinition).where(
-                    WorkflowDefinition.slug == "document-upload-notify-v1"
+                    WorkflowDefinition.slug == "document-upload-v1"
                 )
             )
         ).scalar_one_or_none()
         if existing_wf is None:
-            session.add(
-                WorkflowDefinition(
-                    firm_id=None,
-                    name="Document Upload Notify",
-                    slug="document-upload-notify-v1",
-                    description="Notify case team when a document is uploaded",
-                    n8n_workflow_id="document-upload-notify-v1",
-                    trigger_type=TriggerType.EVENT.value,
-                    is_active=True,
-                )
-            )
-            print("OK  Seeded workflow definition document-upload-notify-v1")
+            print("Run make seed-workflows for full enterprise catalog.")
 
         await session.commit()
         print("✅ Sprint 4 seed complete")

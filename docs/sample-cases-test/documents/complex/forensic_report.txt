@@ -1,0 +1,60 @@
+DIGITAL FORENSICS INVESTIGATION REPORT
+Matter: Acme Corporation Ransomware Incident (CYB-2026-0045)
+Prepared By: CrowdStrike Services — Lead Examiner Priya Sharma
+Report Date: March 15, 2026 | Classification: CONFIDENTIAL — ATTORNEY WORK PRODUCT
+
+ENGAGEMENT SCOPE
+CrowdStrike was retained March 12, 2026 under Acme's CyberGuard policy panel to determine
+attack vector, scope of compromise, data exfiltration volume, and indicators of compromise.
+Evidence sources: 14 encrypted hosts, PA-5220 logs, M365 audit logs, CRM database snapshots.
+
+ATTACK TIMELINE (CONFIRMED)
+
+2026-03-10 02:14 UTC  Initial access via GlobalProtect VPN (CVE-2024-3400 exploitation)
+2026-03-10 02:31 UTC  Credential dump (Mimikatz variant) on ACME-FS-PROD-03
+2026-03-10 03:15 UTC  Domain reconnaissance; discovery of jmartinez_svc privileges
+2026-03-11 08:45 UTC  CRM database connection established from compromised file server
+2026-03-11 11:47 UTC  Bulk SELECT on customer_pii; 847 rows exported to staging directory
+2026-03-11 14:03 UTC  Exfiltration to 194.36.190.45 via HTTPS (2.1 GB archive)
+2026-03-12 05:58 UTC  Attempted database destruction (blocked by WAF rule)
+2026-03-12 06:02 UTC  LockBit 3.0 deployment across 14 hosts; ransom note deployed
+2026-03-12 08:19 UTC  Acme SOC detection; CrowdStrike Falcon isolate command issued
+2026-03-13 09:30 UTC  Decryption key obtained through insurer-approved negotiator
+
+ROOT CAUSE ANALYSIS
+Primary vector: Unpatched Palo Alto VPN (PAN-OS 10.1.6, CVE-2024-3400)
+Contributing factors: No MFA on jmartinez_svc service account; MSP patch deferral;
+  backup server on same VLAN as production; delayed SIEM alert tuning.
+
+DATA EXFILTRATION FINDINGS
+Archive recovered from attacker infrastructure (partial): acme_crm_dump_20260311.7z
+  - 847 unique customer records (matches Acme CRM export count)
+  - Fields: name, address, email, phone, account ID, card last-4, subscription metadata
+  - 23 records contain SSN (legacy table: customer_pii_legacy_ssn)
+  - No employee payroll or health records identified in archive
+  - SHA256: f4e8a2c1b9d7e3f6a0c8b5d2e1f9a4c7b3d6e8f0a2c4b6d8e1f3a5c7b9d2e4f6
+
+INDICATORS OF COMPROMISE (IOCs)
+IPs: 185.220.101.44, 194.36.190.45, 45.142.212.89
+Domains: sync-update-acme[.]com, acme-cdn-static[.]net (malicious)
+File hashes: LockBit loader SHA256 3b7e9f2a1c8d4e6f0a2b5c9d3e7f1a4b8c2d6e0f4a8b2c6d0e4f8a2b6c0d4e8f2
+Accounts: jmartinez_svc (compromised), backup_admin (password spray attempt — failed)
+
+PERSISTENCE MECHANISMS
+- Scheduled task "WindowsUpdateHelper" on FS-PROD-03 (removed)
+- Web shell upload to CRM staging directory /tmp/.cache/update.php (removed)
+- Golden ticket attempt detected and blocked by domain controller audit policy
+
+REMEDIATION RECOMMENDATIONS
+1. Complete PAN-OS patch to 11.1.4-h1; enforce MFA on all VPN accounts within 72 hours
+2. Segment backup infrastructure; implement PAM for database administrators
+3. Deploy Canary tokens in CRM export directories
+4. Terminate or renegotiate CloudSecure MSP contract; internal patch ownership
+5. Customer notification: 847 individuals + 23 SSN supplemental state AG filing
+6. Retain logs 365 days; engage SEC counsel if materiality threshold met ($1.2M impact est.)
+
+EVIDENCE CUSTODY
+All forensic images stored at CrowdStrike secure facility. Chain of custody log #CS-ACME-0312.
+Report shared with FMG, CyberGuard adjuster Thomas Berg, and FBI Cyber Division (IC3 ref pending).
+
+Signed: Priya Sharma, GCFA | CrowdStrike Services

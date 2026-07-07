@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>{% block title %}LexFlow AI{% endblock %}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td { font-family: Arial, Helvetica, sans-serif !important; }
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f1f5f9;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,0.12);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#0f172a;padding:24px 32px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td>
+                    <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">LexFlow AI</p>
+                    <p style="margin:4px 0 0;font-size:13px;color:#94a3b8;">Workflow Notification Engine</p>
+                  </td>
+                  {% if status_badge is defined %}
+                  <td align="right" valign="middle">
+                    <span style="display:inline-block;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600;color:#ffffff;background-color:{{ status_color|default('#107C10') }};">{{ status_badge }}</span>
+                  </td>
+                  {% endif %}
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px;">
+              {% block content %}{% endblock %}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px;background-color:#f8fafc;border-top:1px solid #e2e8f0;">
+              <p style="margin:0 0 8px;font-size:12px;color:#64748b;line-height:1.5;">
+                Generated automatically by <strong>LexFlow AI Workflow Engine</strong>.
+              </p>
+              <p style="margin:0;font-size:11px;color:#94a3b8;line-height:1.5;">
+                This message may contain attorney-client privileged information. If you received this in error, please notify support and delete it.
+                {% if correlation_id %}<br/>Ref: {{ correlation_id }}{% endif %}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

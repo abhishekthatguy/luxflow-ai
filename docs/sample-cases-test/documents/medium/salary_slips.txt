@@ -1,0 +1,33 @@
+TECHNOVA INC. — PAYROLL EARNINGS STATEMENTS
+Employee: Sarah Johnson | ID: TN-EMP-44821 | Senior Product Analyst
+Pay Frequency: Bi-Weekly | Filing Status: Single / 1 Allowance
+
+════════════════════════════════════════════════════════════════════════════
+PAY PERIOD: December 1–14, 2025 | Pay Date: December 19, 2025
+
+Regular Salary (80 hrs)           $3,653.85      YTD Gross: $87,692.40
+GROSS PAY                         $3,653.85
+Deductions: Fed Tax ($612.40), CA Tax ($298.15), FICA ($279.54),
+401(k) 6% ($219.23), Benefits ($187.50)
+NET PAY                           $2,057.03 → Wells Fargo ****7823
+
+════════════════════════════════════════════════════════════════════════════
+PAY PERIOD: January 1–14, 2026 | Pay Date: January 16, 2026
+
+Regular Salary (80 hrs)           $3,653.85      YTD Gross: $3,653.85
+GROSS PAY                         $3,653.85
+Deductions: Fed Tax ($612.40), CA Tax ($298.15), FICA ($279.54),
+401(k) 6% ($219.23), Benefits ($187.50)
+NET PAY                           $2,057.03 → Wells Fargo ****7823
+
+════════════════════════════════════════════════════════════════════════════
+PAY PERIOD: January 15–28, 2026 | Pay Date: January 30, 2026
+
+Regular Salary (80 hrs)           $3,653.85      YTD Gross: $7,307.70
+GROSS PAY                         $3,653.85
+Deductions: Fed Tax ($612.40), CA Tax ($298.15), FICA ($279.54),
+401(k) 6% ($219.23), Benefits ($187.50)
+NET PAY                           $2,057.03 → Wells Fargo ****7823
+
+Annualized base: $95,000 | No bonus, overtime, or adjustments in these periods.
+Payroll: payroll@technova.com | (415) 555-0100

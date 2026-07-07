@@ -128,7 +128,9 @@ flowchart LR
 |----------|-------------|
 | [orchestration-model.md](./orchestration-model.md) | Responsibility split — FastAPI owns logic, n8n orchestrates |
 | [n8n-integration.md](./n8n-integration.md) | Private n8n deployment, security controls, node restrictions |
-| [workflow-catalog.md](./workflow-catalog.md) | Initial workflow catalog with triggers, inputs, and outputs |
+| [workflow-catalog.md](./workflow-catalog.md) | Legacy catalog (pre-implementation planning) |
+| **[workflow-groups.md](./workflow-groups.md)** | **Current — workflow groups (business, infra, test, …)** |
+| **[workflow-technical-reference.md](./workflow-technical-reference.md)** | **Auto-generated technical specs per workflow** |
 | [webhook-contracts.md](./webhook-contracts.md) | FastAPI ↔ n8n trigger and callback payload schemas |
 | [retry-dlq.md](./retry-dlq.md) | Retry policies, dead letter queues, failure recovery |
 | [promotion-pipeline.md](./promotion-pipeline.md) | Dev → staging → prod workflow promotion pipeline |
@@ -161,19 +163,19 @@ flowchart LR
 | `failed` | n8n callback error, timeout, or DLQ exhaustion |
 | `cancelled` | User cancelled before completion |
 
-### Initial Workflow Slugs
+### Current Workflow Groups (v1 — implemented)
 
-| Slug | Trigger |
-|------|---------|
-| `intake-new-client-v1` | Event: `CaseCreated` |
-| `document-upload-notify-v1` | Event: `DocumentUploaded` |
-| `deadline-reminder-v1` | Schedule: daily |
-| `ai-summary-notify-v1` | Event: `SummaryGenerated` |
-| `case-close-archive-v1` | Event: `CaseStatusChanged(closed)` |
-| `discovery-request-v1` | Manual |
-| `conflict-check-v1` | Event: `CaseCreated` |
+| Group | Folder | Count | Examples |
+|-------|--------|-------|----------|
+| **Business** | `n8n/workflows/business/` | 6 | `document-upload-v1`, `case-intake-v1` |
+| **Notifications** | `n8n/workflows/notifications/` | 1 | `approval-escalation-v1` |
+| **Reports** | `n8n/workflows/reports/` | 1 | `daily-partner-report-v1` |
+| **Infrastructure** | `n8n/workflows/infra/` | 1 | `ops-health-monitor-v1` |
+| **Test** | `n8n/workflows/test/` | 1 | `smoke-callback-v1` |
 
-Full catalog: [workflow-catalog.md](./workflow-catalog.md).
+Full reference: [workflow-groups.md](./workflow-groups.md) · [workflow-technical-reference.md](./workflow-technical-reference.md)
+
+Legacy planning catalog: [workflow-catalog.md](./workflow-catalog.md).
 
 ---
 

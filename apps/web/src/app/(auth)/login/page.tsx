@@ -48,7 +48,7 @@ export default function LoginPage() {
       <h1 className="text-2xl font-semibold">Sign in</h1>
       <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
         <p className="font-medium">Dev credentials</p>
-        <p className="mt-1 font-mono text-xs">jane@example.com</p>
+        <p className="mt-1 font-mono text-xs">admin@example.com · jane@example.com</p>
         <p className="font-mono text-xs">password123</p>
       </div>
       <form onSubmit={onSubmit} className="mt-6 space-y-4">

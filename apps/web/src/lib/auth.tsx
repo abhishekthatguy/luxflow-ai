@@ -12,6 +12,31 @@ function apiBase(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 }
 
+const API_TIMEOUT_MS = 15_000;
+
+async function fetchWithTimeout(
+  input: string,
+  init?: RequestInit,
+  timeoutMs = API_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error(
+        "Cannot reach the API (timeout). Ensure the stack is running: make dev, then check http://localhost:8000/health",
+      );
+    }
+    throw new Error(
+      "Cannot reach the API. Start the stack with make dev and confirm http://localhost:8000/health responds.",
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function getStoredAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);
@@ -26,21 +51,44 @@ async function parseEnvelope<T>(res: Response): Promise<T> {
   return json.data;
 }
 
+export function newIdempotencyKey(): string {
+  return crypto.randomUUID();
+}
+
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit = {},
+  options: RequestInit & { idempotencyKey?: string } = {},
   token?: string | null,
 ): Promise<T> {
-  const headers = new Headers(options.headers);
-  if (!headers.has("Content-Type") && options.body) {
+  const { idempotencyKey, ...fetchOptions } = options;
+  const headers = new Headers(fetchOptions.headers);
+  if (!headers.has("Content-Type") && fetchOptions.body) {
     headers.set("Content-Type", "application/json");
+  }
+  if (idempotencyKey) {
+    headers.set("Idempotency-Key", idempotencyKey);
   }
   const access = token ?? getStoredAccessToken();
   if (access) {
     headers.set("Authorization", `Bearer ${access}`);
   }
-  const res = await fetch(`${apiBase()}${path}`, { ...options, headers });
+  const res = await fetchWithTimeout(`${apiBase()}${path}`, { ...fetchOptions, headers });
   return parseEnvelope<T>(res);
+}
+
+export async function apiFetchVoid(
+  path: string,
+  options: RequestInit = {},
+  token?: string | null,
+): Promise<void> {
+  const headers = new Headers(options.headers);
+  const access = token ?? getStoredAccessToken();
+  if (access) headers.set("Authorization", `Bearer ${access}`);
+  const res = await fetchWithTimeout(`${apiBase()}${path}`, { ...options, headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(formatApiError(body, res.statusText));
+  }
 }
 
 export async function apiFetchList<T>(
@@ -50,7 +98,7 @@ export async function apiFetchList<T>(
   const headers = new Headers();
   const access = token ?? getStoredAccessToken();
   if (access) headers.set("Authorization", `Bearer ${access}`);
-  const res = await fetch(`${apiBase()}${path}`, { headers });
+  const res = await fetchWithTimeout(`${apiBase()}${path}`, { headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(formatApiError(body, res.statusText));

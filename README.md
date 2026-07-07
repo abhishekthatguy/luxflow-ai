@@ -22,6 +22,16 @@ make verify-platform   # or: ./verify-platform.sh
 make migrate && make seed && make verify-sprint3   # Sprint 3 case module
 ```
 
+**Phase 1 AI stack (local / low cost):** PyMuPDF → PaddleOCR → Ollama → pgvector. See [`docs/07-ai/PHASE-1-2-STACK.md`](./docs/07-ai/PHASE-1-2-STACK.md).
+
+```bash
+# Enable Phase 1 LLM in .env: LLM_PROVIDER=ollama
+docker compose up -d ollama
+docker compose exec ollama ollama pull qwen2.5:latest
+docker compose exec ollama ollama pull nomic-embed-text
+make migrate   # applies pgvector + document_chunks
+```
+
 Full playbook: [`docs/14-playbooks/10-minute-quickstart.md`](./docs/14-playbooks/10-minute-quickstart.md)
 
 ---
@@ -53,6 +63,7 @@ cd luxflow-ai
 | **Enterprise Docs** | [`docs/`](./docs/README.md) | Full documentation — 146 files across 15 folders |
 | **Agent Entry** | [`AGENTS.md`](./AGENTS.md) | Shared instructions for all AI coding tools |
 | **Claude Code** | [`CLAUDE.md`](./CLAUDE.md) | Claude-specific session bootstrap |
+| **Credentials (local)** | [`CREDENTIALS.md`](./CREDENTIALS.md) | URLs, RBAC logins, MinIO, email, `.env` secrets map |
 
 **Engineers:** [Documentation Index](./docs/README.md) · **AI assistants:** [`.ai/README.md`](./.ai/README.md)
 

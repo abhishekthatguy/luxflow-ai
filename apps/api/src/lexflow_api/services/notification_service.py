@@ -5,7 +5,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser
-from lexflow_api.models.notifications import Notification, NotificationChannel, NotificationStatus
+from lexflow_api.models.notifications import Notification, NotificationStatus
 from lexflow_api.schemas.notifications import NotificationResponse
 
 
@@ -23,16 +23,52 @@ class NotificationService:
         case_id: UUID | None = None,
         metadata: dict[str, object] | None = None,
     ) -> Notification:
+        return await self.create_rich_in_app(
+            user_id=user_id,
+            firm_id=firm_id,
+            title=title,
+            body=body,
+            description=body,
+            case_id=case_id,
+            metadata=metadata or {},
+        )
+
+    async def create_rich_in_app(
+        self,
+        *,
+        user_id: UUID,
+        firm_id: UUID,
+        title: str,
+        body: str,
+        description: str,
+        case_id: UUID | None = None,
+        event_type: str | None = None,
+        correlation_id: UUID | None = None,
+        workflow_slug: str | None = None,
+        workflow_execution_id: UUID | None = None,
+        priority: str | None = None,
+        action_url: str | None = None,
+        metadata: dict[str, object] | None = None,
+    ) -> Notification:
         now = datetime.now(UTC)
         notification = Notification(
             user_id=user_id,
             firm_id=firm_id,
             case_id=case_id,
-            channel=NotificationChannel.IN_APP,
+            channel="in_app",
             title=title,
             body=body,
-            status=NotificationStatus.SENT,
+            description=description,
+            status=NotificationStatus.SENT.value,
             sent_at=now,
+            delivered_at=now,
+            event_type=event_type,
+            correlation_id=correlation_id,
+            workflow_slug=workflow_slug,
+            workflow_execution_id=workflow_execution_id,
+            priority=priority,
+            action_url=action_url,
+            provider="in_app",
             metadata_=metadata or {},
         )
         self._session.add(notification)
@@ -75,7 +111,7 @@ class NotificationService:
             from lexflow_api.exceptions import NotFoundError
 
             raise NotFoundError("Notification not found.")
-        notification.status = NotificationStatus.READ
+        notification.status = NotificationStatus.READ.value
         notification.read_at = datetime.now(UTC)
         await self._session.flush()
         return NotificationResponse.model_validate(notification)

@@ -6,8 +6,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser
 from lexflow_api.auth.matter_wall import get_participant_role, user_can_access_case
+from lexflow_api.auth.permissions import PERM_CREATE_CASE, has_permission
 from lexflow_api.auth.rbac import FIRM_WIDE_ACCESS_ROLES, can_manage_participants, has_any_role
-from lexflow_api.exceptions import ConflictError, ForbiddenError, NotFoundError
+from lexflow_api.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationAppError
+from lexflow_api.domain.practice_areas import is_valid_practice_area
 from lexflow_api.models.cases import (
     Case,
     CaseParticipant,
@@ -33,6 +35,7 @@ from lexflow_api.schemas.notes import NoteCreate, NoteResponse
 from lexflow_api.schemas.tasks import TaskCreate, TaskResponse, TaskUpdate
 from lexflow_api.schemas.timeline import TimelineEventResponse
 from lexflow_api.services.audit import write_audit_log
+from lexflow_api.services.case_number import generate_case_number
 from lexflow_api.services.outbox import write_outbox_event
 from lexflow_api.services.timeline import write_timeline_event
 
@@ -105,6 +108,8 @@ class CaseService:
         return self.to_case_response(case)
 
     async def create_case(self, user: CurrentUser, data: CaseCreate) -> CaseResponse:
+        if not has_permission(user.roles, PERM_CREATE_CASE):
+            raise ForbiddenError("Your role is not permitted to create cases.")
         client = await self._session.execute(
             select(Client).where(
                 Client.id == data.client_id,
@@ -115,10 +120,32 @@ class CaseService:
         if client.scalar_one_or_none() is None:
             raise NotFoundError("Client not found.")
 
+        normalized_title = data.title.strip()
+        duplicate = await self._session.execute(
+            select(Case).where(
+                Case.firm_id == user.firm_id,
+                Case.client_id == data.client_id,
+                func.lower(Case.title) == normalized_title.lower(),
+                Case.deleted_at.is_(None),
+            )
+        )
+        if duplicate.scalar_one_or_none() is not None:
+            raise ConflictError(
+                "A case with this client and title already exists. "
+                "Open the existing case or use a different title."
+            )
+
+        case_number = data.case_number or await generate_case_number(self._session, firm_id=user.firm_id)
+        if not is_valid_practice_area(data.practice_area):
+            raise ValidationAppError(
+                "Invalid practice area.",
+                errors=[{"field": "practiceArea", "message": "Must be a supported practice area."}],
+            )
+
         case = Case(
             firm_id=user.firm_id,
             client_id=data.client_id,
-            case_number=data.case_number,
+            case_number=case_number,
             title=data.title,
             practice_area=data.practice_area,
             status=data.status.value,
@@ -162,9 +189,26 @@ class CaseService:
             case_id=case.id,
             firm_id=user.firm_id,
             event_type="CaseCreated",
-            title=f"Case {case.case_number} created",
+            title=f"Case created",
             actor_id=user.id,
             payload={"caseNumber": case.case_number},
+        )
+        from lexflow_api.domain.notification_events import NotificationEventType
+        from lexflow_api.services.notifications.helpers import emit_case_notification
+
+        await emit_case_notification(
+            self._session,
+            event_type=NotificationEventType.CASE_CREATED,
+            firm_id=user.firm_id,
+            case_id=case.id,
+            title="New case created",
+            description=f"Case {case.case_number}: {case.title} has been opened.",
+            status_badge="Created",
+            actor_id=user.id,
+            context={
+                "current_stage": "Intake",
+                "recent_activity": ["Case created", "Intake workflow queued"],
+            },
         )
         return self.to_case_response(case)
 

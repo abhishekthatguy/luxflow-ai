@@ -1,0 +1,26 @@
+ATLANTA MEDICAL CENTER — EMERGENCY DEPARTMENT REPORT
+Patient: John Doe
+DOB: 05/12/1985
+Date of Exam: March 16, 2026
+Referring Incident: Motor vehicle accident — March 15, 2026
+
+CHIEF COMPLAINT
+Neck pain and lower back pain following motor vehicle collision.
+
+DIAGNOSIS
+1. Cervical strain (whiplash)
+2. Lumbar sprain
+
+TREATMENT PLAN
+- Rest and anti-inflammatory medication for 7 days
+- Physical therapy referral (6 sessions)
+- Work restriction: no heavy lifting for 2 weeks
+
+PROGNOSIS
+Expected recovery 4–6 weeks with conservative treatment.
+
+ATTENDING PHYSICIAN
+Dr. Emily Roberts, MD
+Atlanta Medical Center
+
+ESTIMATED MEDICAL COSTS TO DATE: $8,200

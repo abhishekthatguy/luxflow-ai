@@ -1,0 +1,62 @@
+{
+  "name": "WF-Notification-Teams",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notification-teams-v1",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "notification-teams-v1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst url = body.teamsWebhookUrl;\nif (!url) {\n  return [{ json: { status: 'stub', message: 'TEAMS_WEBHOOK_URL not configured', correlationId: body.correlationId } }];\n}\nreturn [{ json: { ...body, postUrl: url } }];"
+      },
+      "id": "resolve",
+      "name": "Resolve Webhook URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.postUrl }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.card }}",
+        "options": {}
+      },
+      "id": "teams",
+      "name": "Post to Teams",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'accepted', correlationId: $('Resolve Webhook URL').item.json.correlationId } }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Resolve Webhook URL", "type": "main", "index": 0 }]] },
+    "Resolve Webhook URL": { "main": [[{ "node": "Post to Teams", "type": "main", "index": 0 }]] },
+    "Post to Teams": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": true
+}

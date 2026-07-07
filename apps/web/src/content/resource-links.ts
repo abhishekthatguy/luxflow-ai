@@ -64,6 +64,13 @@ export const resourceLinkGroups: ResourceLinkGroup[] = [
         external: true,
       },
       {
+        id: "n8n",
+        title: "n8n Workflow Editor",
+        description: "Visual workflow UI — import JSON from n8n/workflows/ or use make n8n-import.",
+        href: "http://localhost:5679",
+        external: true,
+      },
+      {
         id: "rabbitmq",
         title: "RabbitMQ Management",
         description: "Queue depth, Celery broker monitoring — guest/guest.",

@@ -1,0 +1,54 @@
+MASTER SERVICES AGREEMENT — MANAGED SECURITY SERVICES
+Contract Number: CSA-ACME-2023-0088
+Effective Date: January 1, 2024 | Term: 36 months (expires December 31, 2026)
+
+PARTIES
+Client: Acme Corporation, 500 Commerce Tower, Atlanta, GA 30303
+Provider: CloudSecure MSP, Inc., 1200 Cyber Way, Reston, VA 20190
+
+SCOPE OF SERVICES
+CloudSecure shall provide managed security services including:
+  (a) 24/7 SOC monitoring and alert triage
+  (b) Firewall and VPN administration (Palo Alto GlobalProtect)
+  (c) Patch management for edge security devices (monthly maintenance windows)
+  (d) Quarterly vulnerability assessments
+  (e) Incident response support (first responder, not primary IR firm)
+
+SERVICE LEVEL AGREEMENT (SLA)
+- Critical alert response: 15 minutes (24/7/365)
+- VPN/firewall patch deployment: Within 14 business days of vendor patch release
+- Uptime for managed devices: 99.9% monthly
+- SLA credit: 5% monthly fee reduction per missed critical response; max 25% per month
+
+FEES
+Monthly retainer: $28,500 USD
+Incident response overage: $275/hour beyond 40 included IR hours annually
+
+BREACH NOTIFICATION OBLIGATIONS (Section 9.4)
+CloudSecure shall notify Acme within twenty-four (24) hours of discovering:
+  (i) Any unauthorized access to Acme systems under CloudSecure management
+  (ii) Any confirmed or suspected data breach involving Acme customer data
+  (iii) Any failure to meet SLA thresholds that could impact security posture
+
+Notification shall include: nature of incident, affected systems, preliminary root cause,
+and remediation steps. CloudSecure shall preserve all relevant logs for minimum 90 days.
+
+CloudSecure failed to notify Acme of VPN vulnerability scan results from February 2026
+showing PAN-OS 10.1.6 out of compliance — Acme legal reviewing material breach claim.
+
+LIABILITY AND INDEMNIFICATION (Section 12)
+CloudSecure liability capped at 12 months fees ($342,000) except for gross negligence.
+Acme indemnifies CloudSecure for claims arising from Acme's failure to approve scheduled patches.
+Mutual indemnification for third-party data breach claims where fault is allocated by arbitration.
+
+INSURANCE REQUIREMENTS (Section 13)
+CloudSecure maintains: $2M cyber liability, $5M general liability, $3M E&O coverage.
+Acme may be named additional insured on cyber policy upon written request.
+
+TERMINATION
+Either party may terminate for material breach with 30 days cure period.
+Acme issued cure notice March 13, 2026 citing failure to patch VPN (Finding C-2025-01).
+
+GOVERNING LAW: State of Georgia | Dispute Resolution: AAA arbitration, Atlanta, GA
+
+Signed: Jennifer Walsh (Acme GC) | Robert Kline (CloudSecure VP Sales) — January 2, 2024

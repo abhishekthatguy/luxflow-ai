@@ -1,11 +1,12 @@
 "use client";
 
-import type { ClientSummary } from "@lexflow/shared";
+import { PRACTICE_AREAS, type ClientSummary } from "@lexflow/shared";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
-import { DashboardShell } from "@/components/dashboard-shell";
-import { apiFetch, apiFetchList, useAuth } from "@/lib/auth";
+import { AccessDenied, DashboardShell } from "@/components/dashboard-shell";
+import { apiFetch, apiFetchList, newIdempotencyKey, useAuth } from "@/lib/auth";
+import { canCreateCase } from "@/lib/permissions";
 
 export default function NewCasePage() {
   const { user } = useAuth();
@@ -13,9 +14,10 @@ export default function NewCasePage() {
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [clientId, setClientId] = useState("");
   const [title, setTitle] = useState("");
-  const [caseNumber, setCaseNumber] = useState("");
-  const [practiceArea, setPracticeArea] = useState("litigation");
+  const [practiceArea, setPracticeArea] = useState<string>("litigation");
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const idempotencyRef = useRef(newIdempotencyKey());
 
   useEffect(() => {
     apiFetchList<ClientSummary>("/api/v1/clients").then(({ items }) => {
@@ -24,30 +26,42 @@ export default function NewCasePage() {
     });
   }, []);
 
+  if (user && !canCreateCase(user.permissions)) {
+    return (
+      <DashboardShell>
+        <AccessDenied message="Your role is not permitted to create cases." />
+      </DashboardShell>
+    );
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!user) return;
+    setSubmitting(true);
+    setError(null);
     try {
-      const created = await apiFetch<{ id: string }>("/api/v1/cases", {
+      const created = await apiFetch<{ id: string; caseNumber: string }>("/api/v1/cases", {
         method: "POST",
         body: JSON.stringify({
           clientId,
-          caseNumber,
           title,
           practiceArea,
           leadAttorneyId: user.id,
         }),
+        idempotencyKey: idempotencyRef.current,
       });
       router.push(`/cases/${created.id}/overview`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create case");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
     <DashboardShell>
       <h1 className="text-2xl font-semibold">New case</h1>
-      <form onSubmit={onSubmit} className="mt-6 max-w-lg space-y-4">
+      <form onSubmit={onSubmit} className="mt-6 max-w-lg space-y-4" data-testid="new-case-form">
         <label className="block text-sm">
           Client
           <select
@@ -55,43 +69,68 @@ export default function NewCasePage() {
             onChange={(e) => setClientId(e.target.value)}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
             required
+            data-testid="case-client-select"
           >
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+            {clients.length === 0 ? (
+              <option value="">No clients — add one first</option>
+            ) : (
+              clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))
+            )}
           </select>
         </label>
-        <label className="block text-sm">
-          Case number
-          <input
-            value={caseNumber}
-            onChange={(e) => setCaseNumber(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-            required
-          />
-        </label>
+
+        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+          <p className="font-medium text-slate-700">Case number</p>
+          <p className="mt-1" data-testid="case-number-auto-hint">
+            Assigned automatically when you create the case (e.g. {new Date().getFullYear()}-00001).
+          </p>
+        </div>
+
         <label className="block text-sm">
           Title
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            placeholder="Brief matter description"
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
             required
+            data-testid="case-title-input"
           />
         </label>
+
         <label className="block text-sm">
           Practice area
-          <input
+          <select
             value={practiceArea}
             onChange={(e) => setPracticeArea(e.target.value)}
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-          />
+            required
+            data-testid="case-practice-area-select"
+          >
+            {PRACTICE_AREAS.map((area) => (
+              <option key={area.value} value={area.value}>
+                {area.label}
+              </option>
+            ))}
+          </select>
         </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button type="submit" className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white">
-          Create case
+
+        {error && (
+          <p className="text-sm text-red-600" role="alert">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={submitting || clients.length === 0}
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-50"
+        >
+          {submitting ? "Creating…" : "Create case"}
         </button>
       </form>
     </DashboardShell>

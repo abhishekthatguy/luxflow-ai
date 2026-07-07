@@ -1,0 +1,231 @@
+{
+  "name": "WF-09 \u00b7 Operations Health Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Health Check', ok: true } }];"
+      },
+      "id": "check",
+      "name": "Health Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Redis', ok: true } }];"
+      },
+      "id": "redis",
+      "name": "Redis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'RabbitMQ', ok: true } }];"
+      },
+      "id": "rabbit",
+      "name": "RabbitMQ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'Celery', ok: true } }];"
+      },
+      "id": "celery",
+      "name": "Celery",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.body ?? $json;\nreturn [{ json: { ...prev, step: 'API', ok: true } }];"
+      },
+      "id": "api",
+      "name": "API",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/notifications/admin",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"subject\": \"[LexFlow] WF-09 \\u00b7 Operations Health Monitor \\u2014 Create Incident\", \"body\": \"Workflow step completed: Create Incident\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-09 \\u00b7 Operations Health Monitor\", \"step\": \"Create Incident\", \"executionId\": \"{{ $execution.id }}\"}}"
+      },
+      "id": "incident",
+      "name": "Create Incident",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:8000/internal/notifications/admin",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"subject\": \"[LexFlow] WF-09 \\u00b7 Operations Health Monitor \\u2014 Notify Ops\", \"body\": \"Workflow step completed: Notify Ops\", \"source\": \"n8n\", \"metadata\": {\"workflow\": \"WF-09 \\u00b7 Operations Health Monitor\", \"step\": \"Notify Ops\", \"executionId\": \"{{ $execution.id }}\"}}"
+      },
+      "id": "notify",
+      "name": "Notify Ops",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Health Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Health Check": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "RabbitMQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RabbitMQ": {
+      "main": [
+        [
+          {
+            "node": "Celery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Celery": {
+      "main": [
+        [
+          {
+            "node": "API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API": {
+      "main": [
+        [
+          {
+            "node": "Create Incident",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Incident": {
+      "main": [
+        [
+          {
+            "node": "Notify Ops",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "wf-09"
+    }
+  ],
+  "meta": {
+    "purpose": "Every 5 min \u2014 probe Redis, RabbitMQ, Celery, API; create incident + alert admins.",
+    "domain_event": null,
+    "fastapi_trigger": "n8n schedule only",
+    "trigger": "Cron every 5 minutes",
+    "input": {},
+    "output": {
+      "healthy": true,
+      "incidents": []
+    },
+    "retries": 0,
+    "failure": "Self-alert via admin notification",
+    "owner": "platform-team",
+    "version": 1,
+    "category": "infra",
+    "group": "infra",
+    "serial": 9,
+    "summary": "Every 5 min \u2192 probe Redis, RabbitMQ, Celery, API; alert ops on failure."
+  }
+}

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser, get_current_user
@@ -78,6 +79,17 @@ async def confirm_document_upload(
     return envelope(doc, _request_id(request))
 
 
+@documents_router.post("/{document_id}/retry-ocr", response_model=Envelope[DocumentResponse])
+async def retry_document_ocr(
+    request: Request,
+    document_id: UUID,
+    user: CurrentUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> Envelope[DocumentResponse]:
+    doc = await _service(session).retry_ocr(user, document_id)
+    return envelope(doc, _request_id(request))
+
+
 @documents_router.get("/{document_id}/download", response_model=Envelope[DocumentDownloadResponse])
 async def download_document(
     request: Request,
@@ -87,3 +99,22 @@ async def download_document(
 ) -> Envelope[DocumentDownloadResponse]:
     result = await _service(session).get_download_url(user, document_id)
     return envelope(result, _request_id(request))
+
+
+@documents_router.get("/{document_id}/content")
+async def preview_document_content(
+    document_id: UUID,
+    user: CurrentUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> Response:
+    """Stream document bytes through the API for authenticated inline preview."""
+    content, mime_type, filename = await _service(session).get_document_content(user, document_id)
+    safe_name = filename.replace('"', "")
+    return Response(
+        content=content,
+        media_type=mime_type,
+        headers={
+            "Content-Disposition": f'inline; filename="{safe_name}"',
+            "Cache-Control": "private, max-age=120",
+        },
+    )
