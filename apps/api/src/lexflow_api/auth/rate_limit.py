@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from lexflow_api.config import settings
+from lexflow_api.config import settings
 from lexflow_api.exceptions import RateLimitError
 from lexflow_api.infrastructure.cache import get_cache_client
 
-_LOGIN_LIMIT = 10
+_LOGIN_LIMIT = 100 if settings.environment == "local" else 10
 _LOGIN_WINDOW_SEC = 60
 
 

@@ -20,6 +20,6 @@ export class DocumentsPage {
   }
 
   uploadSuccessMessage() {
-    return this.page.getByText(/Uploaded.*OCR processing/i);
+    return this.page.getByText(/uploaded successfully.*OCR/i);
   }
 }

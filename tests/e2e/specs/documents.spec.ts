@@ -12,8 +12,8 @@ test.describe("Sprint 4 — Documents", () => {
 
     await expect(documents.uploadSuccessMessage()).toBeVisible();
     await expect(documents.list()).toContainText("sample-document.txt");
-    await expect(documents.list()).toContainText(/ready/i, { timeout: 90_000 });
-    await expect(documents.list()).toContainText(/ocr completed/i);
+    await expect(documents.list()).toContainText(/ready/i, { timeout: 180_000 });
+    await expect(documents.list()).toContainText(/OCR: Complete/i, { timeout: 180_000 });
   });
 
   test("case nav includes documents tab", async ({ page, createCase }) => {

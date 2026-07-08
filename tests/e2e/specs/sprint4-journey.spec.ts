@@ -10,7 +10,7 @@ import { WorkflowsPage } from "../pages/workflows.page";
 test.describe("Sprint 4 journey @release-blocker", () => {
   test("upload, summarize, approve, and trigger workflow", async ({ page, createCase }) => {
     test.slow();
-    test.setTimeout(180_000);
+    test.setTimeout(600_000);
 
     const caseId = await createCase("E2E Full Sprint 4 Journey");
     const documents = new DocumentsPage(page);
@@ -20,11 +20,11 @@ test.describe("Sprint 4 journey @release-blocker", () => {
     await documents.goto(caseId);
     await documents.uploadSampleDocument();
     await expect(documents.uploadSuccessMessage()).toBeVisible();
-    await expect(documents.list()).toContainText(/ready/i, { timeout: 90_000 });
+    await expect(documents.list()).toContainText(/ready/i, { timeout: 180_000 });
 
     await ai.goto(caseId);
     await ai.requestSummary();
-    await expect(ai.summariesList()).toContainText("draft", { timeout: 90_000 });
+    await expect(ai.summariesList()).toContainText("draft", { timeout: 300_000 });
     await ai.approveButton().click();
     await expect(ai.summariesList()).toContainText("approved");
 

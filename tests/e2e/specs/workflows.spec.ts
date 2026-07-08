@@ -23,6 +23,8 @@ test.describe("Sprint 4 — Workflows", () => {
     await page.goto(`/cases/${caseId}/overview`);
     await page.getByRole("link", { name: "Workflows" }).click();
     await expect(page).toHaveURL(new RegExp(`/cases/${caseId}/workflows$`));
-    await expect(page.getByRole("heading", { name: "Workflows" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Workflows", level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
   });
 });

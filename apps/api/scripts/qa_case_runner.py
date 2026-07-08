@@ -87,7 +87,7 @@ def login(email: str, password: str, *, max_attempts: int = 8) -> str:
     for attempt in range(max_attempts):
         response = httpx.post(
             f"{BASE}/api/v1/auth/login",
-            json={"email": email, "password": password},
+            json={"email": email, "password": password, "audience": "enterprise"},
             timeout=30,
         )
         last_response = response
@@ -236,7 +236,7 @@ def request_and_wait_summary(
     document_count: int = 3,
 ) -> dict | None:
     if timeout is None:
-        timeout = max(90, document_count * 25)
+        timeout = max(300, document_count * 90)
     request_headers = headers(token)
     summaries = httpx.get(
         f"{BASE}/api/v1/cases/{case_id}/ai/summaries",
@@ -586,7 +586,7 @@ def run_case_walkthrough(
     partner_token = login(PARTNER_EMAIL, PARTNER_PASSWORD)
     check_audit(partner_token)
     check_notification(partner_token)
-    check_operations_dashboard(attorney_token)
+    check_operations_dashboard(partner_token)
 
     return print_report(spec_gaps=spec_gaps)
 

@@ -5,7 +5,7 @@ export class WorkflowsPage {
 
   async goto(caseId: string) {
     await this.page.goto(`/cases/${caseId}/workflows`);
-    await this.page.getByRole("heading", { name: "Workflows" }).waitFor();
+    await this.page.getByRole("heading", { name: "Workflows", level: 1 }).waitFor();
   }
 
   executionsList() {
@@ -13,7 +13,9 @@ export class WorkflowsPage {
   }
 
   triggerButton() {
-    return this.page.getByRole("button", { name: /Trigger Document Upload Pipeline/i });
+    return this.page
+      .getByTestId("wf-card-document-upload-v1")
+      .getByRole("button", { name: "Trigger", exact: true });
   }
 
   async triggerDocumentNotify() {

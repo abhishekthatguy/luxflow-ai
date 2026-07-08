@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from lexflow_api.auth.dependencies import CurrentUser
+from lexflow_api.auth.dependencies import CurrentUser, get_current_user
 from lexflow_api.auth.permissions import PERM_OPERATIONS
 from lexflow_api.auth.require_permission import require_permission
 from lexflow_api.db.session import get_db
@@ -98,8 +98,9 @@ async def operations_workflow_runs(
 async def case_processing_pipeline(
     request: Request,
     case_id: UUID,
-    user: CurrentUser = Depends(_ops_user),
+    user: CurrentUser = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[CaseProcessingPipeline]:
+    """Case processing timeline — any user with matter access (not admin-only)."""
     data = await OperationsService(session).case_processing_pipeline(user, case_id)
     return envelope(data, _request_id(request))
