@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from lexflow_api.auth.dependencies import CurrentUser
 from lexflow_api.auth.jwt import create_access_token, generate_refresh_token, hash_token
 from lexflow_api.auth.password import verify_password
+from lexflow_api.auth.rbac import ENTERPRISE_ROLES, PORTAL_ROLES, has_any_role
 from lexflow_api.config import settings
 from lexflow_api.exceptions import UnauthorizedError, ValidationAppError
 from lexflow_api.models.identity import RefreshToken, User
@@ -19,7 +20,13 @@ class AuthService:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def login(self, email: str, password: str) -> tuple[TokenResponse, User]:
+    async def login(
+        self,
+        email: str,
+        password: str,
+        *,
+        audience: str = "enterprise",
+    ) -> tuple[TokenResponse, User]:
         result = await self._session.execute(
             select(User).options(selectinload(User.roles)).where(User.email == email)
         )
@@ -28,6 +35,16 @@ class AuthService:
             raise UnauthorizedError("Invalid email or password.")
         if not verify_password(password, user.password_hash):
             raise UnauthorizedError("Invalid email or password.")
+
+        role_set = {role.name for role in user.roles}
+        if audience == "enterprise" and not has_any_role(role_set, ENTERPRISE_ROLES):
+            raise UnauthorizedError(
+                "This account uses the client portal. Sign in at the client portal login page."
+            )
+        if audience == "portal" and not has_any_role(role_set, PORTAL_ROLES):
+            raise UnauthorizedError(
+                "Firm staff must use the main LexFlow sign-in page, not the client portal."
+            )
 
         roles = [role.name for role in user.roles]
         access_token = create_access_token(

@@ -8,15 +8,19 @@ import { GlobalSearch } from "@/components/global-search";
 import { NotificationBell } from "@/components/notification-bell";
 import { useAuth } from "@/lib/auth";
 import {
+  canManageClients,
   canManageUsers,
   canManageWorkflows,
   canViewOperations,
   hasPermission,
+  isEnterpriseUser,
+  isPortalUser,
+  PERM,
 } from "@/lib/permissions";
 
 const NAV: { href: string; label: string; visible: (permissions: string[]) => boolean }[] = [
-  { href: "/cases", label: "Cases", visible: () => true },
-  { href: "/clients", label: "Clients", visible: () => true },
+  { href: "/cases", label: "Cases", visible: (p) => hasPermission(p, PERM.VIEW_CASES) },
+  { href: "/clients", label: "Clients", visible: (p) => canManageClients(p) },
   {
     href: "/workflows",
     label: "Workflows",
@@ -32,7 +36,7 @@ const NAV: { href: string; label: string; visible: (permissions: string[]) => bo
     label: "Users",
     visible: (p) => canManageUsers(p),
   },
-  { href: "/links", label: "My Tools", visible: () => true },
+  { href: "/links", label: "My Tools", visible: (p) => hasPermission(p, PERM.VIEW_CASES) },
 ];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -43,8 +47,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const permissions = user?.permissions ?? [];
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.replace("/login");
+      return;
+    }
+    if (isPortalUser(user)) {
+      router.replace("/portal");
     }
   }, [loading, user, router]);
 
@@ -63,6 +72,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return (
       <main className="flex min-h-screen items-center justify-center text-slate-500">
         Loading…
+      </main>
+    );
+  }
+
+  if (!isEnterpriseUser(user)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center text-slate-500">
+        Redirecting to client portal…
       </main>
     );
   }

@@ -5,17 +5,21 @@ import pytest
 from lexflow_api.auth.permissions import (
     PERM_APPROVE_AI,
     PERM_CREATE_CASE,
+    PERM_MANAGE_CLIENTS,
     PERM_MANAGE_USERS,
     PERM_MANAGE_WORKFLOWS,
     PERM_OPERATIONS,
+    PERM_PORTAL_ACCESS,
     PERM_REQUEST_AI,
     PERM_VIEW_AUDIT,
+    PERM_VIEW_CASES,
     has_permission,
     permissions_for_roles,
 )
 from lexflow_api.auth.rbac import (
     ROLE_ASSOCIATE,
     ROLE_ATTORNEY,
+    ROLE_CLIENT,
     ROLE_LEGAL_ASSISTANT,
     ROLE_MANAGING_PARTNER,
     ROLE_PARALEGAL,
@@ -53,3 +57,13 @@ def test_admin_has_full_operational_permissions() -> None:
     assert PERM_MANAGE_WORKFLOWS in perms
     assert PERM_OPERATIONS in perms
     assert PERM_APPROVE_AI in perms
+    assert PERM_MANAGE_CLIENTS in perms
+    assert PERM_VIEW_CASES in perms
+    assert PERM_PORTAL_ACCESS not in perms
+
+
+def test_client_portal_permissions() -> None:
+    perms = set(permissions_for_roles({ROLE_CLIENT}))
+    assert PERM_PORTAL_ACCESS in perms
+    assert PERM_VIEW_CASES not in perms
+    assert PERM_MANAGE_CLIENTS not in perms

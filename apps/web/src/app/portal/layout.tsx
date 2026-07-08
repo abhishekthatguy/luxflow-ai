@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { PortalShell } from "@/components/portal-shell";
-import { AuthProvider } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Client Portal",
@@ -9,9 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AuthProvider>
-      <PortalShell>{children}</PortalShell>
-    </AuthProvider>
-  );
+  return <PortalShell>{children}</PortalShell>;
 }

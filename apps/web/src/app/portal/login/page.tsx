@@ -2,33 +2,39 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 
 import { PasswordInput } from "@/components/password-input";
 import { useAuth } from "@/lib/auth";
+import { isEnterpriseUser, isPortalUser } from "@/lib/permissions";
 
 function PortalLoginForm() {
   const { login, user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const sessionExpired = searchParams.get("session") === "expired";
   const resetSuccess = searchParams.get("reset") === "success";
   const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (!loading && user) {
-    router.replace("/portal");
-    return null;
-  }
+  useEffect(() => {
+    if (loading || !user) return;
+    if (isPortalUser(user)) {
+      router.replace("/portal");
+    } else if (isEnterpriseUser(user)) {
+      router.replace("/cases");
+    }
+  }, [loading, user, router]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      await login(email.trim(), password);
-      router.push("/portal");
+      const profile = await login(email.trim(), password, "portal");
+      router.push(isPortalUser(profile) ? "/portal" : "/cases");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed. Check your credentials.");
     } finally {
@@ -36,8 +42,17 @@ function PortalLoginForm() {
     }
   }
 
+  if (!loading && user) {
+    return <p className="mt-8 text-sm text-slate-500">Redirecting…</p>;
+  }
+
   return (
     <form onSubmit={onSubmit} className="mt-8 space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      {sessionExpired && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">
+          Your session expired. Please sign in again.
+        </div>
+      )}
       {resetSuccess && (
         <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
           Password saved. Sign in with your new password.
@@ -78,6 +93,12 @@ function PortalLoginForm() {
         First time here or forgot your password?{" "}
         <Link href="/portal/forgot-password" className="text-emerald-800 hover:underline">
           Email me a secure link
+        </Link>
+      </p>
+      <p className="text-center text-sm text-slate-600">
+        Firm staff?{" "}
+        <Link href="/login" className="text-emerald-800 hover:underline">
+          Use the LexFlow sign-in page
         </Link>
       </p>
     </form>

@@ -39,7 +39,7 @@ async def login(
 
     check_login_rate_limit(_client_ip(request))
     service = AuthService(session)
-    tokens, user = await service.login(body.email, body.password)
+    tokens, user = await service.login(body.email, body.password, audience=body.audience)
     logger = __import__("logging").getLogger("lexflow.api")
     logger.info(
         "auth_login_success",

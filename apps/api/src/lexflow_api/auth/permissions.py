@@ -17,7 +17,9 @@ from lexflow_api.auth.rbac import (
 
 # Permission identifiers (also returned on GET /auth/me for UI gating)
 PERM_LOGIN = "login"
+PERM_PORTAL_ACCESS = "portal:access"
 PERM_VIEW_CASES = "case:view"
+PERM_MANAGE_CLIENTS = "client:manage"
 PERM_CREATE_CASE = "case:create"
 PERM_UPLOAD_DOCUMENT = "document:upload"
 PERM_REQUEST_AI = "ai:request"
@@ -30,7 +32,9 @@ PERM_MANAGE_WORKFLOWS = "workflow:manage"
 ALL_PERMISSIONS: frozenset[str] = frozenset(
     {
         PERM_LOGIN,
+        PERM_PORTAL_ACCESS,
         PERM_VIEW_CASES,
+        PERM_MANAGE_CLIENTS,
         PERM_CREATE_CASE,
         PERM_UPLOAD_DOCUMENT,
         PERM_REQUEST_AI,
@@ -53,9 +57,13 @@ _OPERATIONS_ROLES = _AUDIT_ROLES
 _MANAGE_USERS_ROLES = frozenset({ROLE_SYSTEM_ADMINISTRATOR})
 _MANAGE_WORKFLOWS_ROLES = frozenset({ROLE_SYSTEM_ADMINISTRATOR, ROLE_MANAGING_PARTNER})
 
+_MANAGE_CLIENTS_ROLES = ENTERPRISE_ROLES
+
 _PERMISSION_ROLE_MAP: dict[str, frozenset[str]] = {
     PERM_LOGIN: LOGIN_ROLES,
+    PERM_PORTAL_ACCESS: PORTAL_ROLES,
     PERM_VIEW_CASES: ENTERPRISE_ROLES,
+    PERM_MANAGE_CLIENTS: _MANAGE_CLIENTS_ROLES,
     PERM_CREATE_CASE: _CREATE_CASE_ROLES,
     PERM_UPLOAD_DOCUMENT: _UPLOAD_ROLES,
     PERM_REQUEST_AI: _REQUEST_AI_ROLES,
@@ -80,6 +88,7 @@ def permissions_for_roles(user_roles: set[str]) -> list[str]:
 
 def require_permission_message(permission: str) -> str:
     labels = {
+        PERM_MANAGE_CLIENTS: "manage clients",
         PERM_CREATE_CASE: "create cases",
         PERM_REQUEST_AI: "request AI summaries",
         PERM_APPROVE_AI: "approve AI summaries",

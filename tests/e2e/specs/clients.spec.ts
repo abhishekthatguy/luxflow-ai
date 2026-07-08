@@ -46,7 +46,7 @@ test.describe("Clients", () => {
     await page.getByRole("button", { name: "Add client" }).click();
 
     await expect(clients.clientRow(uniqueName)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("e2e.client@example.com")).toBeVisible();
+    await expect(page.getByText("e2e.client@example.com").first()).toBeVisible();
 
     await page
       .getByRole("listitem")

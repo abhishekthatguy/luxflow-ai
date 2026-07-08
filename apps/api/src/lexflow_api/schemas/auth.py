@@ -1,6 +1,8 @@
 from datetime import datetime
 from uuid import UUID
 
+from typing import Literal
+
 from pydantic import EmailStr, Field
 
 from lexflow_api.schemas.common import CamelModel
@@ -9,6 +11,7 @@ from lexflow_api.schemas.common import CamelModel
 class LoginRequest(CamelModel):
     email: EmailStr
     password: str = Field(min_length=8)
+    audience: Literal["enterprise", "portal"] = "enterprise"
 
 
 class RefreshRequest(CamelModel):

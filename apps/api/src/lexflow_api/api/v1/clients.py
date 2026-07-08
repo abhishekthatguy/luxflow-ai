@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from lexflow_api.auth.dependencies import CurrentUser, get_current_user
+from lexflow_api.auth.permissions import PERM_MANAGE_CLIENTS
+from lexflow_api.auth.require_permission import require_permission
 from lexflow_api.db.session import get_db
 from lexflow_api.schemas.cases import CaseResponse
 from lexflow_api.schemas.clients import ClientCreate, ClientResponse, ClientUpdate
@@ -24,7 +26,7 @@ async def list_clients(
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100, alias="pageSize"),
     search: str | None = None,
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser = Depends(require_permission(PERM_MANAGE_CLIENTS)),
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[list[ClientResponse]]:
     service = ClientService(session)
@@ -40,7 +42,7 @@ async def list_clients(
 async def create_client(
     request: Request,
     body: ClientCreate,
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser = Depends(require_permission(PERM_MANAGE_CLIENTS)),
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[ClientResponse]:
     service = ClientService(session)
@@ -52,7 +54,7 @@ async def create_client(
 async def get_client(
     request: Request,
     client_id: UUID,
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser = Depends(require_permission(PERM_MANAGE_CLIENTS)),
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[ClientResponse]:
     service = ClientService(session)
@@ -65,7 +67,7 @@ async def update_client(
     request: Request,
     client_id: UUID,
     body: ClientUpdate,
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser = Depends(require_permission(PERM_MANAGE_CLIENTS)),
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[ClientResponse]:
     service = ClientService(session)
@@ -79,7 +81,7 @@ async def list_client_cases(
     client_id: UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100, alias="pageSize"),
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser = Depends(require_permission(PERM_MANAGE_CLIENTS)),
     session: AsyncSession = Depends(get_db),
 ) -> Envelope[list[CaseResponse]]:
     client_service = ClientService(session)

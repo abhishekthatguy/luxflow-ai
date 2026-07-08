@@ -1,17 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import { siteConfig } from "@/content/site";
+import { useAuth } from "@/lib/auth";
+import { isEnterpriseUser, isPortalUser } from "@/lib/permissions";
 
-const PORTAL_NAV: { href: string; label: string; exact?: boolean }[] = [
-  { href: "/portal", label: "Home", exact: true },
-  { href: "/portal/login", label: "Sign in" },
-];
+const PUBLIC_PORTAL_PATHS = new Set([
+  "/portal",
+  "/portal/login",
+  "/portal/forgot-password",
+  "/portal/reset-password",
+]);
 
 export function PortalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
+  const isPublicPage = PUBLIC_PORTAL_PATHS.has(pathname);
+  const signedInPortalUser = Boolean(user && isPortalUser(user));
+  const signedInEnterpriseUser = Boolean(user && isEnterpriseUser(user));
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (signedInEnterpriseUser && pathname.startsWith("/portal/login")) {
+      router.replace("/cases");
+    }
+  }, [loading, user, signedInEnterpriseUser, pathname, router]);
+
+  const navItems = signedInPortalUser
+    ? [
+        { href: "/portal", label: "Home", exact: true },
+        { href: "/portal/login", label: "Account", exact: true },
+      ]
+    : [
+        { href: "/portal", label: "Home", exact: true },
+        { href: "/portal/login", label: "Sign in", exact: true },
+      ];
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-emerald-50/80 to-slate-50">
@@ -22,7 +49,7 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
             <span className="text-xs text-emerald-700/80">Client Portal</span>
           </Link>
           <nav className="flex items-center gap-1">
-            {PORTAL_NAV.map((item) => {
+            {navItems.map((item) => {
               const active = item.exact
                 ? pathname === item.href
                 : pathname.startsWith(item.href);
@@ -40,6 +67,26 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+            {signedInPortalUser && (
+              <button
+                type="button"
+                onClick={() => {
+                  logout();
+                  router.push("/portal/login");
+                }}
+                className="rounded-md px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              >
+                Sign out
+              </button>
+            )}
+            {signedInEnterpriseUser && !isPublicPage && (
+              <Link
+                href="/cases"
+                className="rounded-md px-3 py-2 text-sm text-emerald-800 hover:bg-emerald-50"
+              >
+                Firm dashboard
+              </Link>
+            )}
           </nav>
         </div>
       </header>
@@ -50,6 +97,12 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
           <a href="mailto:clawtbot@gmail.com" className="text-emerald-700 hover:underline">
             clawtbot@gmail.com
           </a>
+        </p>
+        <p className="mt-2">
+          Firm staff?{" "}
+          <Link href="/login" className="text-emerald-700 hover:underline">
+            Sign in to LexFlow
+          </Link>
         </p>
         <p className="mt-2">
           <Link href="/privacy" className="hover:text-slate-700">
